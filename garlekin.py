@@ -1,11 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from math import sin, pi
+import argparse 
 
-n = 25
+n = 200
 
+parser = argparse.ArgumentParser(description='Metodo de Garlekin')
+parser.add_argument('--entrada', type=int, default=0, help='entrada do problema')
 
-entrada = 2
+args = parser.parse_args()
+
+entrada = args.entrada
 
 h = np.array([1.0/n]*n)
 x = np.zeros(n-1)
@@ -70,6 +75,13 @@ for i in xrange(n-1):
 y = np.linalg.solve(K, F)
 
 
-plt.plot(x,y)
-plt.plot(x, sol_analitica)
+fig, ax = plt.subplots(1,2,figsize=(15,8))
+ax[0].plot(x,y, label="Calculada")
+ax[0].plot(x, sol_analitica, label="Analitica")
+ax[1].plot(x, np.abs(y-sol_analitica))
+
+ax[0].set_title("Solucao")
+ax[1].set_title("Erro")
+
+
 plt.show()
