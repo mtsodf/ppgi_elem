@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from math import sin, pi
-import argparse 
+import argparse
 
-n = 200
+n = 40
 
 parser = argparse.ArgumentParser(description='Metodo de Garlekin')
 parser.add_argument('--entrada', type=int, default=0, help='entrada do problema')
@@ -34,11 +34,11 @@ if entrada == 0:
     f = f(x)
 
 elif entrada == 1:
-    alpha=1; beta=0; 
+    alpha=1; beta=0;
 
     sol_analitica = np.apply_along_axis(lambda x: x - x*x, 0, x)
     f = np.zeros(n-1) + 2*alpha
-    
+
 elif entrada == 2:
     alpha=0; beta=1;
     sol_analitica = np.apply_along_axis(lambda x: x - x*x, 0, x)
@@ -72,7 +72,7 @@ for i in xrange(n-1):
     F[i] = f[i]*h[i]/3 + f[i]*h[i+1]/3
 
     if i > 0:
-        F[i] += f[i-1]*h[i]/6 
+        F[i] += f[i-1]*h[i]/6
 
     if i < n - 2:
         F[i] += f[i+1]*h[i+1]/6
@@ -91,7 +91,8 @@ y = np.linalg.solve(K, F)
 ######################################################################
 fig, ax = plt.subplots(1,2,figsize=(15,8))
 ax[0].plot(x,y, label="Calculada")
-ax[0].plot(x, sol_analitica, label="Analitica")
+ax[0].scatter(x, sol_analitica, label="Analitica", color="red")
+ax[0].legend()
 ax[1].plot(x, np.abs(y-sol_analitica))
 
 ax[0].set_title("Solucao")
