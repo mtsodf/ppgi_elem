@@ -1,24 +1,41 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from math import sin, pi
+
+n = 25
 
 
-n = 40
-
-alpha = 1
-beta  = 0
-f = np.zeros(n-1) + 2*alpha
-
-
-
+entrada = 2
 
 h = np.array([1.0/n]*n)
-x = np.linspace(h[0], 1.0, num=n-1, endpoint=False)
+x = np.zeros(n-1)
+x[0] = h[0]
 
-sol_analitica = np.apply_along_axis(lambda x: x - x*x, 0, x)
-f = sol_analitica.copy()
-beta=1; alpha=0;
+for i in xrange(1,n-1):
+    x[i] = x[i-1] + h[i]
 
-print f
+
+if entrada == 0:
+    alpha = 1
+    beta  = 1
+    f = np.vectorize(lambda x: sin(2*pi*x))
+    sol_analitica = f(x)
+
+    f = lambda y: (alpha*4*pi*pi*sin(2*pi*y)+beta*sin(2*pi*y))
+    f = np.vectorize(f)
+    f = f(x)
+
+elif entrada == 1:
+    alpha=1; beta=0; 
+
+    sol_analitica = np.apply_along_axis(lambda x: x - x*x, 0, x)
+    f = np.zeros(n-1) + 2*alpha
+    
+elif entrada == 2:
+    alpha=0; beta=1;
+    sol_analitica = np.apply_along_axis(lambda x: x - x*x, 0, x)
+    f = np.apply_along_axis(lambda x: x - x*x, 0, x)
+
 
 
 K = np.zeros((n-1, n-1))
