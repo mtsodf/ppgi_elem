@@ -1,0 +1,35 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+
+    "tasks": [
+        {
+            "taskName": "cmake",
+            "type": "shell",
+            "command": "mkdir -p cpp/build/Debug && cd cpp/build/Debug && cmake ../../ -DCMAKE_BUILD_TYPE=Debug"
+        },
+
+        {
+            "taskName": "build",
+            "type": "shell",
+            "dependsOn": "cmake",
+            "command": "cd cpp/build/Debug && make",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+
+        {
+            "taskName": "test",
+            "type": "shell",
+            "dependsOn": "cmake",
+            "command": "cd cpp/build/Debug && make && make test",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            }
+        }
+    ]
+}
