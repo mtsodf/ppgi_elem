@@ -1,6 +1,8 @@
 #ifndef JACOBIH
 #define JACOBIH
 
-void Jacobi(real * matrix, real *F, real tolerance, int maxiters);
+#include "../definitions.h"
+
+void Jacobi(int n, real * matrix, real *F, real * initialGuess, real tolerance, int maxiters);
 
 #endif
