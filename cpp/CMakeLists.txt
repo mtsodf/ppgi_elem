@@ -3,8 +3,6 @@ cmake_minimum_required(VERSION 3.5)
 enable_testing()
 
 
-include_directories(ThirdParty/viennacl)
-
 add_subdirectory(Fem1d)
 add_subdirectory(LinearAlgebra)
 add_subdirectory(Utils)
