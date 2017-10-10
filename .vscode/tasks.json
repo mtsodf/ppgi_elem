@@ -7,7 +7,10 @@
         {
             "taskName": "cmake",
             "type": "shell",
-            "command": "mkdir -p cpp/build/Debug && cd cpp/build/Debug && CC=pgcc CXX=pgc++ cmake ../../ -DCMAKE_BUILD_TYPE=Debug"
+            "command": "mkdir -p cpp/build/Debug && cd cpp/build/Debug && CC=pgcc CXX=pgc++ cmake ../../ -DCMAKE_BUILD_TYPE=Debug",
+            "osx": {
+                "command": "mkdir -p cpp/build/Debug && cd cpp/build/Debug &&  cmake ../../ -DCMAKE_BUILD_TYPE=Debug"
+            }       
         },
 
         {
