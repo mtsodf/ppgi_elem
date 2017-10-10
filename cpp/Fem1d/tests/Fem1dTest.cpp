@@ -4,6 +4,7 @@
 #include "../Fem1d.h"
 #include "../../Utils/Utils.h"
 #include "../../ThirdParty/catch.hpp"
+#include "../../definitions.h"
 #include <cmath>
 
 TEST_CASE("Test Local Matrix", "[localmatrix]"){
@@ -44,10 +45,29 @@ TEST_CASE("Test Global Matrix", "[globalmatrix]"){
 
 
 TEST_CASE("Test RHS", "[rhsvector]"){
-    real Fe[2];
-    printf("Ang = %f\t sin = %f", 2.0*M_PI*0.25, sin(2.0*M_PI*0.25));
-    RhsLocal(0.25, 0.0, sin(2.0*M_PI*0.25), Fe);
-    REQUIRE( 6.74640293 == Approx(Fe[1]).epsilon(0.00001));
+    real Fe[2], a[2], F[3], x[3];
+    printf("Ang = %f\t sin = %f\n", 2.0*M_PI*0.25, sin(2.0*M_PI*0.25));
+
+
+
+    real hs[4], fs[3];
+    hs[0] = 0.25; hs[1] = 0.25; hs[2] = 0.25; hs[3] = 0.25;
+    x[0] = 0.25; x[1] = 0.5; x[2] = 0.75;
+    for (size_t i = 0; i < 3; i++)
+    {
+        fs[i] = 4*M_PI*M_PI*sin(2*M_PI*x[i]) + sin(2*M_PI*x[i]);
+    }
+
+
+    RhsLocal(0.25, 0.0, fs[0], Fe);
+    RhsLocal(0.25, fs[0], fs[1], a);
+    REQUIRE( 6.74640293 == Approx(Fe[1]+a[0]).epsilon(0.00001));
+
+    RhsGlobal(4, hs, fs, F);
+
+    REQUIRE( 6.74640293    == Approx(F[0]).epsilon(0.00001));
+    REQUIRE(8.88178420e-16 == Approx(F[1]).epsilon(0.00001));
+    REQUIRE(-6.74640293    == Approx(F[2]).epsilon(0.00001));   
 
 }
 
