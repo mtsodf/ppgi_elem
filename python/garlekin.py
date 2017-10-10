@@ -87,6 +87,7 @@ for i in xrange(n-1):
         F[i] += f[i+1]*h[i+1]/6
 
 
+print F
 
 ######################################################################
 # Solucao do Sistema Linear

@@ -83,3 +83,34 @@ void GlobalMatrix(int n, real alpha, real beta, real* hs, real *K){
 
 }
 
+
+void RhsLocal(real he, real f1, real f2, real *Fe){
+    real w = sqrt(3)/3.0;
+    Fe[0]  = f1*(he/2)*(FuncForm(-w,0) * FuncForm(-w,0) + FuncForm(w,0) * FuncForm(w,0));
+    Fe[0] += f1*(he/2)*(FuncForm(-w,1) * FuncForm(-w,0) + FuncForm(w,1) * FuncForm(w,0));
+
+
+    Fe[1]  = f2*(he/2)*(FuncForm(-w,0) * FuncForm(-w,1) + FuncForm(w,0) * FuncForm(w,1));
+    Fe[1] += f2*(he/2)*(FuncForm(-w,1) * FuncForm(-w,1) + FuncForm(w,1) * FuncForm(w,1));
+}
+
+
+void RhsGlobal(int n, real *hs, real *fs, real *F){
+    int ndofs = n - 1;
+
+    for (size_t i = 0; i < ndofs; i++)
+    {
+        F[i] = 0.0;
+    }
+
+    real Fe[2];
+    for (size_t i = 0; i < n; i++)
+    {
+        if(i==0)   RhsLocal(hs[i], 0.0, fs[i],Fe);
+        if(i==n-1) RhsLocal(hs[i],fs[i], 0.0, Fe);
+
+        if(i-1>=0) F[i-1] += Fe[0];
+        if(i<ndofs) F[i]  += Fe[1];
+
+    }
+}

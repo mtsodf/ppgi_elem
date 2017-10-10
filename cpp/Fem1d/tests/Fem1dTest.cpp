@@ -4,6 +4,7 @@
 #include "../Fem1d.h"
 #include "../../Utils/Utils.h"
 #include "../../ThirdParty/catch.hpp"
+#include <cmath>
 
 TEST_CASE("Test Local Matrix", "[localmatrix]"){
     real lm[4];
@@ -41,4 +42,12 @@ TEST_CASE("Test Global Matrix", "[globalmatrix]"){
     REQUIRE( 8.16666667 == Approx(K[8]).epsilon(0.00001));
 }
 
+
+TEST_CASE("Test RHS", "[rhsvector]"){
+    real Fe[2];
+    printf("Ang = %f\t sin = %f", 2.0*M_PI*0.25, sin(2.0*M_PI*0.25));
+    RhsLocal(0.25, 0.0, sin(2.0*M_PI*0.25), Fe);
+    REQUIRE( 6.74640293 == Approx(Fe[1]).epsilon(0.00001));
+
+}
 
