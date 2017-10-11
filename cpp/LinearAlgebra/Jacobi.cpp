@@ -41,13 +41,16 @@ void Jacobi(int n, real * matrix, real *F, real* initialGuess, real tolerance, i
 
 
 void cg(int n, real *matrix, real *b, real *x){
+
     real phi, phiant, beta, alpha;
     real *r, *p, *q;
-    daxpy(n, -1.0, matrix, x, 1.0, b);
-    
-    copy(n, b, &r);
-    zero(n, q);
     int iters = 0;
+
+    //b = b - Ax
+    copy(n, b, &r);
+    daxpy(n, -1.0, matrix, x, 1.0, r);
+    
+    zero(n, &q);
 
     do{ 
         phiant = phi;
@@ -74,7 +77,7 @@ void cg(int n, real *matrix, real *b, real *x){
 
     free(q);
     free(p);
-    free(r)
+    free(r);
 }
 
 

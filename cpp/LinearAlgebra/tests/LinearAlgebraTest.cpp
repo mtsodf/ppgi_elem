@@ -46,6 +46,43 @@ TEST_CASE("Jacobi test", "[jacobi]"){
 }
 
 
+TEST_CASE("cg test", "[cg]"){
+    
+    
+        //Laplacian 1D
+        real matrix[16];
+    
+        for (size_t i = 0; i < 16; i++)
+        {
+            matrix[i] = 0.0;
+        }
+    
+        for (size_t i = 0; i < 4; i++) matrix[DIM(i,i,4)] =  2.0;
+        for (size_t i = 0; i < 3; i++) matrix[DIM(i,i+1,4)] = -1.0;
+        for (size_t i = 0; i < 3; i++) matrix[DIM(i+1,i,4)] = -1.0;
+    
+    
+        real F[4];
+        F[0]=  0.0;
+        F[1]=  0.0;
+        F[2]=  0.0;
+        F[3]=  5.0;
+    
+        real x[4];
+        x[0] = 0.0;
+        x[1] = 0.0;
+        x[2] = 0.0;
+        x[3] = 0.0;
+    
+        cg(4, matrix, F, x);
+    
+        REQUIRE(1.0 == Approx(x[0]).epsilon(1e-5));
+        REQUIRE(2.0 == Approx(x[1]).epsilon(1e-5));
+        REQUIRE(3.0 == Approx(x[2]).epsilon(1e-5));
+        REQUIRE(4.0 == Approx(x[3]).epsilon(1e-5));
+    }
+
+
 TEST_CASE("Matmul test", "[matmul]"){
 
         //Laplacian 1D
