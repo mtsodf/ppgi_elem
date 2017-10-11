@@ -18,10 +18,14 @@ real dot(int n, real *x, real *y){
     return v;
 }
 
-void daxpy(int n, float alpha, real* x, real* y){
+void daxpy(int n, real alpha, real* x, real* y){
+    daxpy(n, alpha, x, 1.0, y);
+}
+
+void daxpy(int n, real alpha, real* x, real beta, real* y){
     for (size_t i = 0; i < n; i++)
     {
-        y[i] = alpha*x[i] + y[i];
+        y[i] = alpha*x[i] + beta*y[i];
     }
 }
 
@@ -36,7 +40,7 @@ void matmul(int n, real *matrix, real *vector, real *result){
     }
 }
 
-void daxpy(int n, float alpha, real* matrix, real* x, real beta, real*y){
+void daxpy(int n, real alpha, real* matrix, real* x, real beta, real*y){
     for (size_t i = 0; i < n; i++)
     {
         real aux=0.0;
