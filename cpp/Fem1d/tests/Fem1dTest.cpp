@@ -5,6 +5,8 @@
 #include "../../Utils/Utils.h"
 #include "../../ThirdParty/catch.hpp"
 #include "../../definitions.h"
+#include "../../LinearAlgebra/Jacobi.h"
+#include "../../LinearAlgebra/Operations.h"
 #include <cmath>
 
 TEST_CASE("Test Local Matrix", "[localmatrix]"){
@@ -48,8 +50,6 @@ TEST_CASE("Test RHS", "[rhsvector]"){
     real Fe[2], a[2], F[3], x[3];
     printf("Ang = %f\t sin = %f\n", 2.0*M_PI*0.25, sin(2.0*M_PI*0.25));
 
-
-
     real hs[4], fs[3];
     hs[0] = 0.25; hs[1] = 0.25; hs[2] = 0.25; hs[3] = 0.25;
     x[0] = 0.25; x[1] = 0.5; x[2] = 0.75;
@@ -70,4 +70,41 @@ TEST_CASE("Test RHS", "[rhsvector]"){
     REQUIRE(-6.74640293    == Approx(F[2]).epsilon(0.00001));   
 
 }
+
+TEST_CASE("Test Elem Matrix", "[globalmatrix]"){
+
+    int n = 10;
+    int unknows = n - 1;
+
+    real x[9], F[9], fs[9], sol[9];
+    real K[81];
+
+    real h = 1.0/n;
+
+    x[0] = h;
+
+    for (size_t i = 1; i < unknows; i++)
+    {
+        x[i] = x[i-1] + h;
+    }
+
+    for (size_t i = 0; i < unknows; i++)
+    {
+        fs[i] = 4*M_PI*M_PI*sin(2*M_PI*x[i]) + sin(2*M_PI*x[i]);
+        sol[i] = sin(2*M_PI*x[i]);
+    }
+
+    GlobalMatrix(10, 1, 1, K);
+    RhsGlobal(4, h, fs, F);
+
+    real * calc;
+
+    zero(unknows, &calc);
+    cg(unknows, K, F, calc);
+
+    daxpy(n, -1.0, calc, sol);
+
+    printf("Norma |calc - sol| = %f\n", norm(n, sol));
+
+}   
 
