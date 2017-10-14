@@ -11,3 +11,11 @@ void PrintMatrix(int n, real * matrix){
         printf("\n");
     }
 }
+
+
+void PrintVec(int n, real* vec){
+    for (size_t i = 0; i < n; i++)
+    {
+        printf("%6.2f\n", vec[i]);
+    }
+}
