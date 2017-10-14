@@ -95,6 +95,18 @@ void RhsLocal(real he, real f1, real f2, real *Fe){
     Fe[1] += f2*(he/2)*(FuncForm(-w,1) * FuncForm(-w,1) + FuncForm(w,1) * FuncForm(w,1));
 }
 
+void RhsGlobal(int n, real h, real *fs, real *F){
+    real *hs = (real*) malloc(n*sizeof(real));
+
+    for (size_t i = 0; i < n; i++)
+    {
+        hs[i] = h;
+    }
+
+    RhsGlobal(n, hs, fs, F);
+
+    free(hs);
+}
 
 void RhsGlobal(int n, real *hs, real *fs, real *F){
     int ndofs = n - 1;
@@ -116,7 +128,7 @@ void RhsGlobal(int n, real *hs, real *fs, real *F){
             RhsLocal(hs[i],fs[i-1], fs[i], Fe);
         }
         
-        if(i-1>=0) F[i-1] += Fe[0];
+        if((i-1)>=0) F[i-1] += Fe[0];
         if(i<ndofs) F[i]  += Fe[1];
 
     }

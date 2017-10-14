@@ -14,6 +14,7 @@ void GlobalMatrix(int n, real alpha, real beta, real *K);
 
 
 void RhsLocal(real he, real f1, real f2, real *Fe);
+void RhsGlobal(int n, real h, real *fs, real *F);
 void RhsGlobal(int n, real *hs, real *fs, real *F);
 
 #endif
