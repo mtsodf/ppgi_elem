@@ -12,10 +12,9 @@ void PrintMatrix(int n, real * matrix){
     }
 }
 
-
 void PrintVec(int n, real* vec){
     for (size_t i = 0; i < n; i++)
     {
-        printf("%6.2f\n", vec[i]);
+        printf("%8.4f\n", vec[i]);
     }
 }

@@ -1,6 +1,8 @@
 #include "Fem1d.h"
 #include "../definitions.h"
 #include <stdlib.h>
+#include "../LinearAlgebra/Jacobi.h"
+#include "../LinearAlgebra/Operations.h"
 #include <cmath>
 using namespace std;
 
@@ -132,4 +134,90 @@ void RhsGlobal(int n, real *hs, real *fs, real *F){
         if(i<ndofs) F[i]  += Fe[1];
 
     }
+}
+
+
+
+extern "C"{
+    real * Fem1dTest(int n, int entrada){
+        
+            int unknows = n - 1;
+            
+            real *x, *F, *fs, *sol;
+            real *K;
+            
+            zero(unknows, &x);
+            zero(unknows, &F);
+            zero(unknows, &fs);
+            zero(unknows, &sol);
+            zero(unknows*unknows, &K);
+        
+            for (size_t i = 0; i < unknows; i++)
+            {
+                for (size_t j = 0; j < unknows; j++)
+                {
+                    K[DIM(i, j, unknows)] = 0.0;
+                }
+            }
+        
+            real h = 1.0/n;
+        
+            x[0] = h;
+        
+            for (size_t i = 1; i < unknows; i++)
+            {
+                x[i] = x[i-1] + h;
+            }
+            
+            real alpha, beta;
+            for (size_t i = 0; i < unknows; i++)
+            {   
+                switch (entrada)
+                {
+                case 0:
+                    alpha = 1.0;
+                    beta = 1.0;
+                    fs[i] = 4*M_PI*M_PI*sin(2*M_PI*x[i]) + sin(2*M_PI*x[i]);
+                    sol[i] = sin(2*M_PI*x[i]);
+                    boundary = 0;
+                    u0 = 0.0;
+                    u1 = 0.0;
+                    break;
+                case 1:
+                    alpha = 1.0;
+                    beta = 0.0;
+                    fs[i] = 2*alpha;
+                    u0 = 0.0;
+                    u1 = 0.0;
+                    break;   
+                case 2:
+                    alpha = 1.0;
+                    beta = 0.5;
+                    fs[i] = 2*alpha;
+                    u0 = 0.0;
+                    u1 = 1.0;
+                    break;                  
+                default:
+                    break;
+                }
+            }
+        
+            GlobalMatrix(n, alpha, beta, K);
+            RhsGlobal(n, h, fs, F);
+        
+            real * calc;
+        
+            zero(unknows, &calc);
+        
+            cg(unknows, K, F, calc);
+        
+            free(x);
+            free(F);
+            free(fs);
+            free(sol);
+            free(K);
+        
+            return calc;
+        }
+
 }

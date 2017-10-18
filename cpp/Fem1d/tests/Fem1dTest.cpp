@@ -73,11 +73,27 @@ TEST_CASE("Test RHS", "[rhsvector]"){
 
 TEST_CASE("Test Elem Matrix", "[globalmatrix]"){
 
-    int n = 10;
+    int n = 100;
     int unknows = n - 1;
 
-    real x[9], F[9], fs[9], sol[9];
-    real K[81];
+    real *x, *F, *fs, *sol;
+    real *K;
+
+    zero(unknows, &x);
+    zero(unknows, &F);
+    zero(unknows, &fs);
+    zero(unknows, &sol);
+    zero(unknows*unknows, &K);
+
+
+    for (size_t i = 0; i < unknows; i++)
+    {
+        for (size_t j = 0; j < unknows; j++)
+        {
+            K[DIM(i, j, unknows)] = 0.0;
+        }
+    }
+
 
     real h = 1.0/n;
 
@@ -88,23 +104,51 @@ TEST_CASE("Test Elem Matrix", "[globalmatrix]"){
         x[i] = x[i-1] + h;
     }
 
+    REQUIRE(x[0] == Approx(h));
+    REQUIRE(x[unknows-1] == Approx(1-h));
+
     for (size_t i = 0; i < unknows; i++)
     {
         fs[i] = 4*M_PI*M_PI*sin(2*M_PI*x[i]) + sin(2*M_PI*x[i]);
         sol[i] = sin(2*M_PI*x[i]);
     }
 
-    GlobalMatrix(10, 1, 1, K);
-    RhsGlobal(4, h, fs, F);
+
+
+    GlobalMatrix(n, 1, 1, K);
+    RhsGlobal(n, h, fs, F);
+
+    printf("Matriz de Rigidez:\n");
+    PrintMatrix(unknows, K);
+
+    printf("Calc Lado Direito:\n");
+    PrintVec(n-1, F);
 
     real * calc;
 
     zero(unknows, &calc);
+
+    printf("Calc Chute Inicial:\n");
+    PrintVec(n-1, calc);
+
     cg(unknows, K, F, calc);
 
-    daxpy(n, -1.0, calc, sol);
+    //Jacobi(unknows, K, F, calc, 1e-6, 1000);
 
-    printf("Norma |calc - sol| = %f\n", norm(n, sol));
+    printf("Calc Solucao:\n");
+    PrintVec(n-1, calc);
+
+    real normSol = norm(unknows, sol);
+    
+    daxpy(n-1, -1.0, calc, sol);
+
+    printf("Norma |calc - sol|/|sol| = %f\n", norm(n-1, sol)/normSol);
+
+    free(x);
+    free(F);
+    free(fs);
+    free(sol);
+    free(K);
 
 }   
 
