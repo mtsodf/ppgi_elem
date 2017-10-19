@@ -4,11 +4,9 @@
 #include "../LinearAlgebra/Jacobi.h"
 #include "../LinearAlgebra/Operations.h"
 #include <cmath>
+#include "../Utils/Utils.h"
 
-#define DIRICHLET 0
-#define NEUMANN   1
-#define DIRICHLET_NEUMANN 2
-#define NEUMANN_DIRICHLET 3
+
 
 
 using namespace std;
@@ -51,7 +49,7 @@ void LocalMatrix(real alpha, real beta, real he, real* lm){
     }
 }
 
-void GlobalMatrix(int n, real alpha, real beta, real *K){
+void GlobalMatrix(int n, real alpha, real beta, real *K, int boundary){
     real * hs;
 
     real h = 1.0/n;
@@ -62,33 +60,34 @@ void GlobalMatrix(int n, real alpha, real beta, real *K){
         hs[i] = h;
     }
 
-    GlobalMatrix(n, alpha, beta, hs, K);
+    GlobalMatrix(n, alpha, beta, hs, K, boundary);
 }
 
-void GlobalMatrix(int n, real alpha, real beta, real* hs, real *K){
+void GlobalMatrix(int n, real alpha, real beta, real* hs, real *K, int boundary){
 
     real lm[4];
-    int ndofs = n - 1;
+    int ndofs = n + 1;
     for (size_t i = 0; i < n; i++)
     {
         LocalMatrix(alpha, beta, hs[i], lm);
-
-        if(i > 0 && i < ndofs){
-            K[DIM(i-1,i-1,ndofs)] += lm[0];
-            K[DIM(i-1,i+0,ndofs)] += lm[1];
-            K[DIM(i+0,i-1,ndofs)] += lm[2];
-            K[DIM(i+0,i+0,ndofs)] += lm[3];
-        }
-
-        if(i == 0){
-            K[DIM(i,i,ndofs)] += lm[3];
-        }
-
-        if(i == ndofs){
-            K[DIM(i-1,i-1,ndofs)] += lm[0];
-        }
+        K[DIM(i,i,ndofs)] += lm[0];
+        K[DIM(i,i+1,ndofs)] += lm[1];
+        K[DIM(i+1,i,ndofs)] += lm[2];
+        K[DIM(i+1,i+1,ndofs)] += lm[3];
+        
     }
 
+    if(boundary == DIRICHLET || boundary == DIRICHLET_NEUMANN){
+        K[DIM(0,0,ndofs)] = 1.0;
+        K[DIM(0,1,ndofs)] = 0.0;
+        K[DIM(1,0,ndofs)] = 0.0;
+    }
+
+    if(boundary == DIRICHLET || boundary == NEUMANN_DIRICHLET){
+        K[DIM(ndofs-1,ndofs-2,ndofs)] = 0.0;
+        K[DIM(ndofs-2,ndofs-1,ndofs)] = 0.0;
+        K[DIM(ndofs-1,ndofs-1,ndofs)] = 1.0;
+    }
 
 }
 
@@ -104,7 +103,7 @@ void RhsLocal(real he, real f1, real f2, real *Fe){
     Fe[1] += f2*(he/2)*(FuncForm(-w,1) * FuncForm(-w,1) + FuncForm(w,1) * FuncForm(w,1));
 }
 
-void RhsGlobal(int n, real h, real *fs, real *F){
+void RhsGlobal(int n, real h, real *fs, real *F, real p, real q, real alpha, real beta, int boundary){
     real *hs = (real*) malloc(n*sizeof(real));
 
     for (size_t i = 0; i < n; i++)
@@ -112,13 +111,13 @@ void RhsGlobal(int n, real h, real *fs, real *F){
         hs[i] = h;
     }
 
-    RhsGlobal(n, hs, fs, F);
+    RhsGlobal(n, hs, fs, F, p, q, alpha, beta, boundary);
 
     free(hs);
 }
 
-void RhsGlobal(int n, real *hs, real *fs, real *F){
-    int ndofs = n - 1;
+void RhsGlobal(int n, real *hs, real *fs, real *F, real p, real q, real alpha, real beta, int boundary){
+    int ndofs = n + 1;
 
     for (size_t i = 0; i < ndofs; i++)
     {
@@ -126,115 +125,163 @@ void RhsGlobal(int n, real *hs, real *fs, real *F){
     }
 
     real Fe[2];
+    
     for (size_t i = 0; i < n; i++)
     {
-        if(i==0)  {
-            RhsLocal(hs[i], 0.0, fs[i],Fe);
-        } else if(i==n-1)
-        {
-            RhsLocal(hs[i],fs[i-1], 0.0, Fe);
-        } else{
-            RhsLocal(hs[i],fs[i-1], fs[i], Fe);
-        }
 
-        if((i-1)>=0) F[i-1] += Fe[0];
-        if(i<ndofs) F[i]  += Fe[1];
+        RhsLocal(hs[i], fs[i], fs[i+1], Fe);
 
+        F[i]    += Fe[0];
+        F[i+1]  += Fe[1];
+
+    }
+
+    if(boundary == DIRICHLET || boundary == DIRICHLET_NEUMANN){
+        F[0] = p;
+        real w = sqrt(3)/3.0; real he = hs[0];
+        F[1] -= p*((he/2)*beta*(FuncForm(-w,0)*FuncForm(-w,1)) + (2/he)*alpha*(DFuncForm(-w,0)*DFuncForm(-w,1)));
+        F[1] -= p*((he/2)*beta*(FuncForm( w,0)*FuncForm( w,1)) + (2/he)*alpha*(DFuncForm( w,0)*DFuncForm( w,1)));
+        
+    }
+
+    if(boundary == DIRICHLET || boundary == NEUMANN_DIRICHLET){
+        real w = sqrt(3)/3.0; real he = hs[n-1];
+        F[ndofs - 1] = q;
+        F[ndofs-2] -= q*((he/2)*beta*(FuncForm(-w,0)*FuncForm(-w,1)) + (2/he)*alpha*(DFuncForm(-w,0)*DFuncForm(-w,1)));
+        F[ndofs-2] -= q*((he/2)*beta*(FuncForm( w,0)*FuncForm( w,1)) + (2/he)*alpha*(DFuncForm( w,0)*DFuncForm( w,1)));
+    }
+
+    if(boundary == NEUMANN || boundary == NEUMANN_DIRICHLET){
+        F[0] -= alpha*p;
+    }
+
+    if(boundary == NEUMANN || boundary == DIRICHLET_NEUMANN){
+        F[ndofs-1] += alpha*q;
     }
 }
 
 
 
 extern "C"{
-    real * Fem1dTest(int n, int entrada){
 
-            int unknows = n - 1;
+    real * Fem1dTest(int n, int entrada){
 
             real *x, *F, *fs, *sol;
             real *K;
+            real alpha, beta, p, q;
+            int boundary;
 
-            zero(unknows, &x);
-            zero(unknows, &F);
-            zero(unknows, &fs);
-            zero(unknows, &sol);
-            zero(unknows*unknows, &K);
-
-            for (size_t i = 0; i < unknows; i++)
-            {
-                for (size_t j = 0; j < unknows; j++)
-                {
-                    K[DIM(i, j, unknows)] = 0.0;
-                }
-            }
+            int unknowns = n + 1;
 
             real h = 1.0/n;
 
-            x[0] = h;
+            zero(unknowns, &x);
+            zero(unknowns, &F);
+            zero(unknowns, &fs);
+            zero(unknowns, &sol);
+            zero(unknowns*unknowns, &K);
 
-            for (size_t i = 1; i < unknows; i++)
+            x[0] = 0.0;
+            
+            for (size_t i = 1; i < unknowns; i++)
             {
                 x[i] = x[i-1] + h;
             }
 
-            real alpha, beta, p, q;
-            int boundary;
 
-
-            for (size_t i = 0; i < unknows; i++)
+            for (size_t i = 0; i < unknowns; i++)
             {
                 switch (entrada)
                 {
-                case 0:
-                    alpha = 1.0;
-                    beta = 1.0;
-                    fs[i] = 4*M_PI*M_PI*sin(2*M_PI*x[i]) + sin(2*M_PI*x[i]);
-                    sol[i] = sin(2*M_PI*x[i]);
-                    boundary = DIRICHLET;
-                    p = 0.0;
-                    q = 0.0;
-                    break;
-                case 1:
-                    alpha = 1.0;
-                    beta = 0.0;
-                    fs[i] = 2*alpha;
-                    boundary = DIRICHLET;
-                    p = 0.0;
-                    q = 0.0;
-                    break;
-                case 2:
-                    alpha = 1.0;
-                    beta = 0.5;
-                    boundary = DIRICHLET;
-                    fs[i] = 0.5*x[i];
-                    p = 0.0;
-                    q = 1.0;
-                    break;
-                default:
-                    break;
+                    case 0:
+                        alpha = 1.0;
+                        beta = 1.0;
+                        fs[i] = 4*M_PI*M_PI*sin(2*M_PI*x[i]) + sin(2*M_PI*x[i]);
+                        sol[i] = sin(2*M_PI*x[i]);
+                        boundary = DIRICHLET;
+                        p = 0.0;
+                        q = 0.0;
+                        break;
+                    case 1:
+                        alpha = 1.0;
+                        beta = 0.0;
+                        fs[i] = 2*alpha;
+                        boundary = DIRICHLET;
+                        p = 0.0;
+                        q = 0.0;
+                        break;
+                    case 2:
+                        alpha = 1.0;
+                        beta = 0.5;
+                        boundary = DIRICHLET;
+                        fs[i] = 0.5*x[i];
+                        p = 0.0;
+                        q = 1.0;
+                        break;
+                    case 3:
+                        alpha = 0.0;
+                        beta = 1.0;
+                        boundary = DIRICHLET;
+                        fs[i] = beta*x[i]*(1-x[i]);
+                        p = 0.0;
+                        q = 0.0;
+                        break;
+                    case 4:
+                        alpha = 2.0;
+                        beta = 1.0;
+                        boundary = DIRICHLET;
+                        fs[i] = -7*exp(2*x[i]);
+                        p = 1.0;
+                        q = exp(2.0);
+                        break;
+                    case 5:
+                        alpha = 2.0;
+                        beta = 1.0;
+                        boundary = NEUMANN;
+                        fs[i] = -7*exp(2*x[i]);
+                        p = 2.0;
+                        q = 2*exp(2.0);
+                        break;
+                    case 6:
+                        alpha = 2.0;
+                        beta = 1.0;
+                        boundary = NEUMANN_DIRICHLET;
+                        fs[i] = -7*exp(2*x[i]);
+                        p = 2.0;
+                        q = exp(2.0);
+                        break;
+                    case 7:
+                        alpha = 2.0;
+                        beta = 1.0;
+                        boundary = DIRICHLET_NEUMANN;
+                        fs[i] = -7*exp(2*x[i]);
+                        p = 1.0;
+                        q = 2*exp(2.0);
+                        break;
+                    case 8:
+                        alpha = 1.0;
+                        beta = 1.0;
+                        boundary = NEUMANN;
+                        fs[i] = 4*M_PI*M_PI*sin(2*M_PI*x[i]) + sin(2*M_PI*x[i]);
+                        p =  2*M_PI;
+                        q =  2*M_PI;
+                        break;
+                    default:
+                        break;
                 }
             }
+            
 
-            GlobalMatrix(n, alpha, beta, K);
+            GlobalMatrix(n, alpha, beta, K, boundary);
 
             // Criando lado direito
-            RhsGlobal(n, h, fs, F);
-
-            //Adicao de condicoes de contorno
-            real w = sqrt(3)/3.0; real he = h;
-            if(boundary == DIRICHLET || boundary == DIRICHLET_NEUMANN){
-                F[0] -= p*((he/2)*beta*(FuncForm(-w,0)*FuncForm(-w,1)) + (2/he)*alpha*(DFuncForm(-w,0)*DFuncForm(-w,1)));
-            }
-            //he = hs[unknows];
-
-            if(boundary == DIRICHLET || boundary == NEUMANN_DIRICHLET){
-                F[unknows-1] -= q*((he/2)*beta*(FuncForm(-w,0)*FuncForm(-w,1)) + (2/he)*alpha*(DFuncForm(-w,0)*DFuncForm(-w,1)));
-            }
+            RhsGlobal(n, h, fs, F, p, q, alpha, beta, boundary);
 
             real * calc;
 
-            zero(unknows, &calc);
+            zero(unknowns, &calc);
 
-            cg(unknows, K, F, calc);
+            cg(unknowns, K, F, calc);
 
             free(x);
             free(F);
@@ -243,6 +290,6 @@ extern "C"{
             free(K);
 
             return calc;
-        }
+    }
 
 }

@@ -23,91 +23,104 @@ TEST_CASE("Test Local Matrix", "[localmatrix]"){
 
 
 TEST_CASE("Test Global Matrix", "[globalmatrix]"){
-    real K[9];
+    int n = 4;
+    int unknowns = n + 1;
+    real K[unknowns*unknowns];
 
-    for (size_t i = 0; i < 9; i++)
+    for (size_t i = 0; i < unknowns*unknowns; i++)
     {
         K[i] = 0.0;
     }
 
-    GlobalMatrix(4, 1, 1, K);
+    GlobalMatrix(4, 1, 1, K, DIRICHLET);
 
-    PrintMatrix(3, K);
+    REQUIRE( 1.00000000 == Approx(K[DIM(0,0,unknowns)]).epsilon(0.00001));
+    REQUIRE( 0.00000000 == Approx(K[DIM(0,1,unknowns)]).epsilon(0.00001));
 
-    REQUIRE( 8.16666667 == Approx(K[0]).epsilon(0.00001));
-    REQUIRE(-3.95833333 == Approx(K[1]).epsilon(0.00001));
-    REQUIRE( 0.00000000 == Approx(K[2]).epsilon(0.00001));
-    REQUIRE(-3.95833333 == Approx(K[3]).epsilon(0.00001));
-    REQUIRE( 8.16666667 == Approx(K[4]).epsilon(0.00001));
-    REQUIRE(-3.95833333 == Approx(K[5]).epsilon(0.00001));
-    REQUIRE( 0.00000000 == Approx(K[6]).epsilon(0.00001));
-    REQUIRE(-3.95833333 == Approx(K[7]).epsilon(0.00001));
-    REQUIRE( 8.16666667 == Approx(K[8]).epsilon(0.00001));
+    REQUIRE( 0.00000000 == Approx(K[DIM(1,0,unknowns)]).epsilon(0.00001));
+    REQUIRE( 8.16666667 == Approx(K[DIM(1,1,unknowns)]).epsilon(0.00001));
+    REQUIRE(-3.95833333 == Approx(K[DIM(1,2,unknowns)]).epsilon(0.00001));
+
+    REQUIRE(-3.95833333 == Approx(K[DIM(2,1,unknowns)]).epsilon(0.00001));
+    REQUIRE( 8.16666667 == Approx(K[DIM(2,2,unknowns)]).epsilon(0.00001));
+    REQUIRE(-3.95833333 == Approx(K[DIM(2,3,unknowns)]).epsilon(0.00001));
+
+    REQUIRE(-3.95833333 == Approx(K[DIM(3,2,unknowns)]).epsilon(0.00001));
+    REQUIRE( 8.16666667 == Approx(K[DIM(3,3,unknowns)]).epsilon(0.00001));
+    REQUIRE( 0.00000000 == Approx(K[DIM(3,4,unknowns)]).epsilon(0.00001));
+
+    REQUIRE( 0.00000000 == Approx(K[DIM(4,3,unknowns)]).epsilon(0.00001));
+    REQUIRE( 1.00000000 == Approx(K[DIM(4,4,unknowns)]).epsilon(0.00001));
 }
 
 
 TEST_CASE("Test RHS", "[rhsvector]"){
-    real Fe[2], a[2], F[3], x[3];
-    printf("Ang = %f\t sin = %f\n", 2.0*M_PI*0.25, sin(2.0*M_PI*0.25));
+    real Fe[2], a[2], F[5], x[5];
 
-    real hs[4], fs[3];
+    real hs[4], fs[5];
     hs[0] = 0.25; hs[1] = 0.25; hs[2] = 0.25; hs[3] = 0.25;
-    x[0] = 0.25; x[1] = 0.5; x[2] = 0.75;
-    for (size_t i = 0; i < 3; i++)
+    x[0]  = 0.0 ; x[1] = 0.25; x[2] = 0.5; x[3] = 0.75; x[4] = 1.0;
+    for (size_t i = 0; i < 5; i++)
     {
         fs[i] = 4*M_PI*M_PI*sin(2*M_PI*x[i]) + sin(2*M_PI*x[i]);
     }
 
+    RhsLocal(0.25, fs[0], fs[1], Fe);
+    RhsLocal(0.25, fs[1], fs[2], a);
 
-    RhsLocal(0.25, 0.0, fs[0], Fe);
-    RhsLocal(0.25, fs[0], fs[1], a);
     REQUIRE( 6.74640293 == Approx(Fe[1]+a[0]).epsilon(0.00001));
 
-    RhsGlobal(4, hs, fs, F);
 
-    REQUIRE( 6.74640293    == Approx(F[0]).epsilon(0.00001));
-    REQUIRE(8.88178420e-16 == Approx(F[1]).epsilon(0.00001));
-    REQUIRE(-6.74640293    == Approx(F[2]).epsilon(0.00001));   
+    RhsGlobal(4, hs, fs, F, 0.0, 0.0, 1.0, 1.0, DIRICHLET);
+    
+
+    REQUIRE( 0.00000000    == Approx(F[0]).epsilon(0.00001));
+    REQUIRE( 6.74640293    == Approx(F[1]).epsilon(0.00001));
+    REQUIRE(8.88178420e-16 == Approx(F[2]).epsilon(0.00001));
+    REQUIRE(-6.74640293    == Approx(F[3]).epsilon(0.00001));  
+    REQUIRE( 0.00000000    == Approx(F[4]).epsilon(0.00001)); 
 
 }
 
 TEST_CASE("Test Elem Matrix", "[globalmatrix]"){
 
     int n = 100;
-    int unknows = n - 1;
+    int unknowns = n + 1;
 
     real *x, *F, *fs, *sol;
     real *K;
 
-    zero(unknows, &x);
-    zero(unknows, &F);
-    zero(unknows, &fs);
-    zero(unknows, &sol);
-    zero(unknows*unknows, &K);
+    zero(unknowns, &x);
+    zero(unknowns, &F);
+    zero(unknowns, &fs);
+    zero(unknowns, &sol);
+    zero(unknowns*unknowns, &K);
 
 
-    for (size_t i = 0; i < unknows; i++)
+    for (size_t i = 0; i < unknowns; i++)
     {
-        for (size_t j = 0; j < unknows; j++)
+        for (size_t j = 0; j < unknowns; j++)
         {
-            K[DIM(i, j, unknows)] = 0.0;
+            K[DIM(i, j, unknowns)] = 0.0;
         }
     }
 
 
     real h = 1.0/n;
 
-    x[0] = h;
+    x[0] = 0.0;
 
-    for (size_t i = 1; i < unknows; i++)
+    for (size_t i = 1; i < unknowns; i++)
     {
         x[i] = x[i-1] + h;
     }
 
-    REQUIRE(x[0] == Approx(h));
-    REQUIRE(x[unknows-1] == Approx(1-h));
+    REQUIRE(x[0] == 0.0);
+    REQUIRE(x[1] == Approx(h));
+    REQUIRE(x[unknowns-2] == Approx(1-h));
+    REQUIRE(x[unknowns-1] == Approx(1));
 
-    for (size_t i = 0; i < unknows; i++)
+    for (size_t i = 0; i < unknowns; i++)
     {
         fs[i] = 4*M_PI*M_PI*sin(2*M_PI*x[i]) + sin(2*M_PI*x[i]);
         sol[i] = sin(2*M_PI*x[i]);
@@ -115,34 +128,22 @@ TEST_CASE("Test Elem Matrix", "[globalmatrix]"){
 
 
 
-    GlobalMatrix(n, 1, 1, K);
-    RhsGlobal(n, h, fs, F);
+    GlobalMatrix(n, 1, 1, K, DIRICHLET);
+    RhsGlobal(n, h, fs, F, 0.0, 0.0, 1.0, 1.0, DIRICHLET);
 
-    printf("Matriz de Rigidez:\n");
-    PrintMatrix(unknows, K);
-
-    printf("Calc Lado Direito:\n");
-    PrintVec(n-1, F);
 
     real * calc;
 
-    zero(unknows, &calc);
+    zero(unknowns, &calc);
 
-    printf("Calc Chute Inicial:\n");
-    PrintVec(n-1, calc);
 
-    cg(unknows, K, F, calc);
+    cg(unknowns, K, F, calc);
 
-    //Jacobi(unknows, K, F, calc, 1e-6, 1000);
-
-    printf("Calc Solucao:\n");
-    PrintVec(n-1, calc);
-
-    real normSol = norm(unknows, sol);
+    real normSol = norm(unknowns, sol);
     
     daxpy(n-1, -1.0, calc, sol);
 
-    printf("Norma |calc - sol|/|sol| = %f\n", norm(n-1, sol)/normSol);
+    printf("Norma |calc - sol|/|sol| = %f\n", norm(unknowns, sol)/normSol);
 
     free(x);
     free(F);
