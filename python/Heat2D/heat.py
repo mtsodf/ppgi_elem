@@ -100,7 +100,7 @@ def CalcKlocal(iel, nodesCoord, lg, Q):
 
         Bt = np.transpose(B)
 
-        Klocal = Klocal + np.dot(np.dot(Bt, Q), B) * detJ
+        Klocal = Klocal + w*np.dot(np.dot(Bt, Q), B) * detJ
 
     return Klocal
 
@@ -241,6 +241,7 @@ def main():
     K = np.zeros((neq, neq))
 
     for iel in range(nelem):
+        
         Klocal = CalcKlocal(iel, nodesCoord, lg, Qlist[iel])
 
         for j in range(4):
@@ -281,7 +282,7 @@ def main():
     if verbose:
         print calcsol
         print sol
-    print "Diferenca entre solucoes: ", np.linalg.norm(calcsol - sol)
+    print "Diferenca entre solucoes: ", np.linalg.norm(calcsol - sol)/np.linalg.norm(sol)
 
 # ***************************************************************
 #                Plot das Solucoes
@@ -324,3 +325,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
