@@ -11,6 +11,9 @@ w = sqrt(3) / 3
 intPoints = [[-w, -w, 1.0], [w, -w, 1.0], [w, w, 1.0], [-w, w, 1.0]]
 
 
+DIRICHLET = 1
+NEUMANN = 2
+
 def funcform(e, n, vert):
 
     if vert == 0:
@@ -105,16 +108,20 @@ def CalcKlocal(iel, nodesCoord, lg, Q):
     return Klocal
 
 
-def CalcFlocal(iel, nodesCoord, lg, f):
+def CalcFlocal(iel, nodesCoord, lg, f, Q, DirichletValues):
     n1, n2, n3, n4 = lg[iel, :]
 
     F = np.zeros(4)
+    P = np.zeros(4)
     fValues = np.zeros(4)
 
     fValues[0], fValues[1], fValues[2], fValues[3] = f[n1], f[n2], f[n3], f[n4]
 
     fValues = np.transpose(fValues)
     coord = CoordM(iel, nodesCoord, lg)
+
+
+    P[0], P[1], P[2], P[3] = DirichletValues[n1], DirichletValues[n2], DirichletValues[n3], DirichletValues[n4]
 
     for e, n, w in intPoints:
         phi = VecFuncForm(e, n)
@@ -125,40 +132,27 @@ def CalcFlocal(iel, nodesCoord, lg, f):
 
         F = F + np.dot(phi, np.dot(fValues, phi)) * detJ
 
+
+    # Parcela da condicao de contorno de Neumann
+    F = F - np.dot(CalcKlocal(iel, nodesCoord, lg, Q), P)
+
     return F
 
 
-def main():
-    parser = argparse.ArgumentParser(description='Transferencia de Calor 2D')
-    parser.add_argument('--entrada', type=int, default=0,
-                        help='quantidade de elementos na direção x')
-    parser.add_argument('--nx', type=int, default=10,
-                        help='quantidade de elementos na direção x')
-    parser.add_argument('--ny', type=int, default=10,
-                        help='quantidade de elementos na direção y')
-    parser.add_argument('--dx', type=float, default=0.1,
-                        help='tamanho da célula na direção x')
-    parser.add_argument('--dy', type=float, default=0.1,
-                        help='tamanho da célula na direção y')
-    parser.add_argument('-v', '--verbose', action="store_true")
-    args = parser.parse_args()
+def getBoundary(i, j, nx, ny):
+    if  j == 0:
+        return 0
+    if i == nx:
+        return 1
+    if j == ny:
+        return 2
+    if i == 0:
+        return 3
 
-    nx = args.nx
-    ny = args.ny
-    entrada = args.entrada
-    verbose = args.verbose
+    return None
 
-    if entrada == 0:
-        def ffunc(x, y):
-            return 2 * pi * pi * sin(pi * x) * sin(pi * y)
 
-        def solfunc(x, y):
-            return sin(pi * x) * sin(pi * y)
-
-        x = np.linspace(0.0, 1.0, num=nx, endpoint=True)
-        y = np.linspace(0.0, 1.0, num=ny, endpoint=True)
-        dx = 1.0 / nx
-        dy = 1.0 / ny
+def run_case(entrada, nx, ny, verbose = False, plot=False):
 
     Qlist = []
 
@@ -175,6 +169,70 @@ def main():
     sol = []
 
 
+    NeumannValues = np.zeros(nnodes)
+    DirichletValues = np.zeros(nnodes)
+
+    if entrada == 0:
+        def ffunc(x, y):
+            return 2 * pi * pi * sin(pi * x) * sin(pi * y)
+
+        def solfunc(x, y):
+            return sin(pi * x) * sin(pi * y)
+
+        lx = 1.0
+        ly = 1.0
+
+        x = np.linspace(0.0, lx, num=nx, endpoint=True)
+        y = np.linspace(0.0, ly, num=ny, endpoint=True)
+        dx = lx / nx
+        dy = ly / ny
+
+
+        contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
+
+    if entrada == 1:
+        def ffunc(x, y):
+            return 2 * pi * pi * sin(pi * x) * sin(pi * y)
+
+        def solfunc(x, y):
+            return sin(pi * x) * sin(pi * y)
+
+        def solfuncDx(x, y):
+            return pi*cos(pi * x) * sin(pi * y)
+
+        def solfuncDy(x, y):
+            return sin(pi * x) * pi * cos(pi * y)
+
+        lx = 0.5
+        ly = 1.0
+
+        x = np.linspace(0.0, lx, num=nx, endpoint=True)
+        y = np.linspace(0.0, ly, num=ny, endpoint=True)
+        dx = lx / nx
+        dy = ly / ny
+
+        contorno = [DIRICHLET, NEUMANN, DIRICHLET, DIRICHLET]
+
+
+
+    if entrada == 2:
+        def ffunc(x, y):
+            return 2 * pi * pi * sin(pi * x) * sin(pi * y)
+
+        def solfunc(x, y):
+            return sin(pi * x) * sin(pi * y)
+
+        lx = 0.5
+        ly = 1.0
+
+        x = np.linspace(0.0, lx, num=nx, endpoint=True)
+        y = np.linspace(0.0, ly, num=ny, endpoint=True)
+        dx = lx / nx
+        dy = ly / ny
+
+        contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
+
+
 # ***************************************************************
 #                        Criando os nós
 # ***************************************************************
@@ -188,10 +246,18 @@ def main():
 
             nodesCoord[inode, 0], nodesCoord[inode, 1] = x, y
 
-            if(i != 0 and i != nx and j != 0 and j != ny):
+            if getBoundary(i, j, nx, ny) is None:
                 eq[inode] = eqCurrent
                 sol.append(solfunc(x, y))
                 eqCurrent += 1
+            else:
+                c = contorno[getBoundary(i, j, nx, ny)]
+                if c == NEUMANN:
+                    eq[inode] = eqCurrent
+                    sol.append(solfunc(x, y))
+                    eqCurrent += 1
+                else:
+                    DirichletValues[inode] = solfunc(x, y)
 
             f[inode] = ffunc(x, y)
 
@@ -201,6 +267,10 @@ def main():
         y += dy
 
     sol = np.array(sol)
+
+
+
+
 # ***************************************************************
 #                     Criando os elementos
 # ***************************************************************
@@ -241,7 +311,7 @@ def main():
     K = np.zeros((neq, neq))
 
     for iel in range(nelem):
-        
+
         Klocal = CalcKlocal(iel, nodesCoord, lg, Qlist[iel])
 
         for j in range(4):
@@ -262,12 +332,16 @@ def main():
     F = np.zeros(neq)
 
     for iel in range(nelem):
-        Flocal = CalcFlocal(iel, nodesCoord, lg, f)
+        Flocal = CalcFlocal(iel, nodesCoord, lg, f, Qlist[iel], DirichletValues)
 
         for i in range(4):
             pos = eq[lg[iel, i]]
             if(pos >= 0):
                 F[pos] += Flocal[i]
+
+# ***************************************************************
+#                 Adicao de Condicao de Neumann
+# ***************************************************************
 
 
 # ***************************************************************
@@ -287,41 +361,92 @@ def main():
 # ***************************************************************
 #                Plot das Solucoes
 # ***************************************************************
+    if plot:
+        x = []
+        y = []
+        z = []
+        z2 = []
+        for inode in range(nnodes):
+            pos = eq[inode]
+            if pos >= 0:
+                x.append(nodesCoord[inode, 0])
+                y.append(nodesCoord[inode, 1])
+                z.append(calcsol[pos])
+                z2.append(sol[pos])
 
-    x = []
-    y = []
-    z = []
-    z2 = []
-    for inode in range(nnodes):
-        pos = eq[inode]
-        if pos >= 0:
-            x.append(nodesCoord[inode, 0])
-            y.append(nodesCoord[inode, 1])
-            z.append(calcsol[pos])
-            z2.append(sol[pos])
+        x = np.array(x)
+        y = np.array(y)
+        z = np.array(z)
 
-    x = np.array(x)
-    y = np.array(y)
-    z = np.array(z)
+        fig = plt.figure(figsize=(30, 15))
+        ax = fig.add_subplot(121, projection='3d')
 
-    fig = plt.figure(figsize=(30, 15))
-    ax = fig.add_subplot(121, projection='3d')
+        ax.scatter3D(np.ravel(x), np.ravel(y), np.ravel(z))
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        ax.set_title("Solucao Calculada")
 
-    ax.scatter3D(np.ravel(x), np.ravel(y), np.ravel(z))
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
-    ax.set_title("Solucao Calculada")
+        ax = fig.add_subplot(122, projection='3d')
+        ax.scatter3D(np.ravel(x), np.ravel(y), np.ravel(z2))
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        ax.set_title("Solucao Analitica")
 
-    ax = fig.add_subplot(122, projection='3d')
-    ax.scatter3D(np.ravel(x), np.ravel(y), np.ravel(z2))
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
-    ax.set_title("Solucao Analitica")
+        plt.show()
 
-    plt.show()
+    return np.linalg.norm(calcsol - sol)/np.linalg.norm(sol)
 
+
+def main():
+
+    parser = argparse.ArgumentParser(description='Transferencia de Calor 2D')
+    parser.add_argument('--entrada', type=int, default=0,
+                        help='quantidade de elementos na direção x')
+    parser.add_argument('--nx', type=int, default=10,
+                        help='quantidade de elementos na direção x')
+    parser.add_argument('--ny', type=int, default=10,
+                        help='quantidade de elementos na direção y')
+    parser.add_argument('--dx', type=float, default=0.1,
+                        help='tamanho da célula na direção x')
+    parser.add_argument('--dy', type=float, default=0.1,
+                        help='tamanho da célula na direção y')
+    parser.add_argument('-v', '--verbose', action="store_true")
+    args = parser.parse_args()
+
+    nx = args.nx
+    ny = args.ny
+    entrada = args.entrada
+    verbose = args.verbose
+
+
+
+    residue = run_case(0, 40, 40, verbose)
+
+    if residue < 1e-3:
+        print "Solucao encontrada"
+
+    else:
+        print "Problemas com a solucao do caso direchlet 0"
+
+
+    residue = run_case(1, 40, 40, verbose, plot=False)
+
+    if residue < 2e-3:
+        print "Solucao encontrada"
+
+    else:
+        print "Problemas com a solucao do caso neumann 0"
+
+
+    residue = run_case(2, 40, 40, verbose, plot=True)
+
+    if residue < 2e-3:
+        print "Solucao encontrada"
+
+    else:
+        print "Problemas com a solucao do caso neumann 0"
 
 if __name__ == '__main__':
     main()
