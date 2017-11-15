@@ -269,6 +269,9 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
     sol = np.array(sol)
 
 
+# ***************************************************************
+#                 Vetor da condicao de contorno
+# ***************************************************************
 
 
 # ***************************************************************
@@ -440,7 +443,7 @@ def main():
         print "Problemas com a solucao do caso neumann 0"
 
 
-    residue = run_case(2, 40, 40, verbose, plot=True)
+    residue = run_case(2, 40, 40, verbose, plot=False)
 
     if residue < 2e-3:
         print "Solucao encontrada"
