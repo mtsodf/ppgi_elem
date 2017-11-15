@@ -266,9 +266,10 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
                     sol.append(solfunc(x, y))
                     eqCurrent += 1
                 else:
-                    DirichletValues[inode] = solfunc(x, y)
+                    nodes[inode].p = solfunc(x, y)
 
             f[inode] = ffunc(x, y)
+            nodes[inode].f = ffunc(x, y)
 
             x += dx
             inode += 1
@@ -353,7 +354,8 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
     F = np.zeros(neq)
 
     for iel in range(nelem):
-        Flocal = CalcFlocal(iel, nodesCoord, lg, f, Qlist[iel], DirichletValues)
+        elem = elements[iel]
+        Flocal = elem.CalcFlocal()
 
         for i in range(4):
             pos = eq[lg[iel, i]]

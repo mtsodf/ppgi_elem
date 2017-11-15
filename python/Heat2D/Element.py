@@ -129,13 +129,13 @@ class Quadrilateral(Element):
 
         for i, node in enumerate(self.nodes):
             fValues[i] = node.f
+            P[i] = node.p
 
 
         fValues = np.transpose(fValues)
-        coord = CoordM(iel, nodesCoord, lg)
+        coord = self.GetCoords()
 
 
-        P[0], P[1], P[2], P[3] = DirichletValues[n1], DirichletValues[n2], DirichletValues[n3], DirichletValues[n4]
 
         for e, n, w in intPoints:
             phi = VecFuncForm(e, n)
@@ -148,7 +148,7 @@ class Quadrilateral(Element):
 
 
         # Parcela da condicao de contorno de Dirichelet
-        F = F - np.dot(CalcKlocal(iel, nodesCoord, lg, Q), P)
+        F = F - np.dot(self.CalcKlocal(), P)
 
         return F
 class Node(object):
@@ -159,3 +159,5 @@ class Node(object):
         self.inode = inode
         self.eq = None
         self.f = None
+        self.p = 0
+        self.q = 0
