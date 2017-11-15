@@ -151,6 +151,7 @@ class Quadrilateral(Element):
         F = F - np.dot(self.CalcKlocal(), P)
 
         return F
+
 class Node(object):
     """docstring for Node"""
     def __init__(self, inode, x, y):
