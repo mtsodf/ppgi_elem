@@ -6,6 +6,7 @@ import argparse
 from math import *
 import pylab as plt
 import mpl_toolkits.mplot3d.axes3d as p3
+from Element import *
 
 w = sqrt(3) / 3
 intPoints = [[-w, -w, 1.0], [w, -w, 1.0], [w, w, 1.0], [-w, w, 1.0]]
@@ -237,23 +238,31 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
 #                        Criando os nós
 # ***************************************************************
 
+    nodes = []
+
     eqCurrent = 0
     y = 0.0
     inode = 0
     for j in range(ny + 1):
+
         x = 0.0
+
         for i in range(nx + 1):
 
             nodesCoord[inode, 0], nodesCoord[inode, 1] = x, y
 
+            nodes.append(Node(inode, x, y))
+
             if getBoundary(i, j, nx, ny) is None:
                 eq[inode] = eqCurrent
+                nodes[-1].eq = eqCurrent
                 sol.append(solfunc(x, y))
                 eqCurrent += 1
             else:
                 c = contorno[getBoundary(i, j, nx, ny)]
                 if c == NEUMANN:
                     eq[inode] = eqCurrent
+                    nodes[-1].eq = eqCurrent
                     sol.append(solfunc(x, y))
                     eqCurrent += 1
                 else:
@@ -278,13 +287,22 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
 #                     Criando os elementos
 # ***************************************************************
     iel = 0
+    elements = []
+
     for j in range(ny):
         for i in range(nx):
+
             firstnode = i + j * (nx + 1)
             lg[iel, 0] = firstnode
             lg[iel, 1] = firstnode + 1
             lg[iel, 2] = firstnode + nx + 2
             lg[iel, 3] = firstnode + nx + 1
+
+            elements.append(Quadrilateral(iel))
+            elements[-1].AddNode(nodes[firstnode])
+            elements[-1].AddNode(nodes[firstnode + 1])
+            elements[-1].AddNode(nodes[firstnode + nx + 2])
+            elements[-1].AddNode(nodes[firstnode + nx + 1])
 
             # adicionando Q como identidade inicialmente
             Qlist.append(np.identity(2))
@@ -314,13 +332,13 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
     K = np.zeros((neq, neq))
 
     for iel in range(nelem):
-
-        Klocal = CalcKlocal(iel, nodesCoord, lg, Qlist[iel])
+        elem = elements[iel]
+        Klocal = elem.CalcKlocal()
 
         for j in range(4):
             for i in range(4):
-                globalI = eq[lg[iel, i]]
-                globalJ = eq[lg[iel, j]]
+                globalI = elem.nodes[i].eq
+                globalJ = elem.nodes[j].eq
 
                 if globalI >= 0 and globalJ >= 0:
                     K[globalI, globalJ] += Klocal[i, j]
@@ -407,9 +425,9 @@ def main():
     parser = argparse.ArgumentParser(description='Transferencia de Calor 2D')
     parser.add_argument('--entrada', type=int, default=0,
                         help='quantidade de elementos na direção x')
-    parser.add_argument('--nx', type=int, default=10,
+    parser.add_argument('--nx', type=int, default=40,
                         help='quantidade de elementos na direção x')
-    parser.add_argument('--ny', type=int, default=10,
+    parser.add_argument('--ny', type=int, default=40,
                         help='quantidade de elementos na direção y')
     parser.add_argument('--dx', type=float, default=0.1,
                         help='tamanho da célula na direção x')
@@ -425,31 +443,8 @@ def main():
 
 
 
-    residue = run_case(0, 40, 40, verbose)
+    residue = run_case(entrada, nx, ny, verbose)
 
-    if residue < 1e-3:
-        print "Solucao encontrada"
-
-    else:
-        print "Problemas com a solucao do caso direchlet 0"
-
-
-    residue = run_case(1, 40, 40, verbose, plot=False)
-
-    if residue < 2e-3:
-        print "Solucao encontrada"
-
-    else:
-        print "Problemas com a solucao do caso neumann 0"
-
-
-    residue = run_case(2, 40, 40, verbose, plot=False)
-
-    if residue < 2e-3:
-        print "Solucao encontrada"
-
-    else:
-        print "Problemas com a solucao do caso neumann 0"
 
 if __name__ == '__main__':
     main()
