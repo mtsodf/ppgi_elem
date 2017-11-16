@@ -25,7 +25,12 @@ class TestHeat(unittest.TestCase):
 
     def test_Neumann_non_hom(self):
 
-        diff = run_case(3, 60, 60, plot=True)
+        diff = run_case(3, 60, 60)
+
+        self.assertLess(diff, 1e-3)
+
+
+        diff = run_case(4, 90, 90)
 
         self.assertLess(diff, 1e-3)
 

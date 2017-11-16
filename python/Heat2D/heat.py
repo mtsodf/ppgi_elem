@@ -117,6 +117,29 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
 
         contorno = [DIRICHLET, NEUMANN, DIRICHLET, DIRICHLET]
 
+    if entrada == 4:
+        def ffunc(x, y):
+            return 2 * pi * pi * sin(pi * x) * sin(pi * y)
+
+        def solfunc(x, y):
+            return sin(pi * x) * sin(pi * y)
+
+        def solfuncDx(x):
+            return pi*cos(pi * x[0]) * sin(pi * x[1])
+
+        def solfuncDy(x):
+            return sin(pi * x[0]) * pi * cos(pi * x[1])
+
+        lx = 1.0
+        ly = 1.0
+
+        x = np.linspace(0.0, lx, num=nx, endpoint=True)
+        y = np.linspace(0.0, ly, num=ny, endpoint=True)
+        dx = lx / nx
+        dy = ly / ny
+
+        contorno = [NEUMANN, DIRICHLET, NEUMANN, NEUMANN]
+
 # ***************************************************************
 #                        Criando os nós
 # ***************************************************************
@@ -233,12 +256,38 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
     if contorno[2] == NEUMANN:
         for i in range(nx):
             elem = elements[i + nx*(ny-1)]
-            elem.setBoundary(2, 0.0, 1.0)
+
+            node1, node2 = elem.getBoundary(2)
+
+            n = np.array([0, 1])
+
+            du = np.array([solfuncDx(node1.coords), solfuncDy(node1.coords)])
+            qvetor = - np.dot(elem.Q, du)
+            q1 = np.dot(qvetor, n)
+
+            du = np.array([solfuncDx(node2.coords), solfuncDy(node2.coords)])
+            qvetor = - np.dot(elem.Q, du)
+            q2 = np.dot(qvetor, n)
+
+            elem.setBoundary(2, q1, q2)
 
     if contorno[3] == NEUMANN:
         for j in range(ny):
             elem = elements[nx*j]
-            elem.setBoundary(3, 0.0, 1.0)
+
+            node1, node2 = elem.getBoundary(3)
+
+            n = np.array([-1, 0])
+
+            du = np.array([solfuncDx(node1.coords), solfuncDy(node1.coords)])
+            qvetor = - np.dot(elem.Q, du)
+            q1 = np.dot(qvetor, n)
+
+            du = np.array([solfuncDx(node2.coords), solfuncDy(node2.coords)])
+            qvetor = - np.dot(elem.Q, du)
+            q2 = np.dot(qvetor, n)
+
+            elem.setBoundary(3, q1, q2)
 
 
 # ***************************************************************
