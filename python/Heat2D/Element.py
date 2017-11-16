@@ -4,6 +4,18 @@ from math import sqrt
 w = sqrt(3) / 3
 intPoints = [[-w, -w, 1.0], [w, -w, 1.0], [w, w, 1.0], [-w, w, 1.0]]
 
+
+def FuncForm1d(e, vert):
+    if vert == 0:
+        return (1.0 - e)/2
+    if vert == 1:
+        return (1.0 + e)/2
+
+    return None
+
+def VecFuncForm1d(e):
+    return np.array([FuncForm1d(e, 0), FuncForm1d(e, 1)])
+
 def FuncForm(e, n, vert):
 
     if vert == 0:
@@ -71,6 +83,7 @@ class Element(object):
         super(Element, self).__init__()
         self.nodes = []
         self.iel = iel
+        self.neumannBoundary = []
 
         if Q is None:
             self.Q = np.identity(2)
@@ -96,6 +109,10 @@ class Element(object):
 
 class Quadrilateral(Element):
 
+    def __init__(self, iel, Q=None):
+        Element.__init__(self, iel, Q=None)
+        self.qtdNodes = 4
+
     def CalcKlocal(self):
         Klocal = np.zeros((4, 4))
 
@@ -119,7 +136,6 @@ class Quadrilateral(Element):
 
         return Klocal
 
-        pass
 
     def CalcFlocal(self):
 
@@ -147,16 +163,58 @@ class Quadrilateral(Element):
             F = F + np.dot(phi, np.dot(fValues, phi)) * detJ
 
 
-        # Parcela da condicao de contorno de Dirichelet
+        # Parcela da condicao de contorno de Dirichlet
         F = F - np.dot(self.CalcKlocal(), P)
 
+
+        #Parcela da condicao de contorno de Neumann
+        for boundary in self.neumannBoundary:
+
+
+            node1, node2 = self.getBoundary(boundary)
+            inode1 = boundary
+            inode2 = (boundary+1)%self.qtdNodes
+            Q = np.array([node1.q, node2.q])
+
+            Qf = np.zeros(2)
+            for e in [-w, w]:
+
+                detJ = np.linalg.norm(node1.coords - node2.coords)
+
+                phi = VecFuncForm1d(e)
+
+                Qf += np.dot(phi, np.dot(Q, phi)) *  detJ/2
+
+            F[inode1] -= Qf[0]
+            F[inode2] -= Qf[1]
+
+
         return F
+
+    def setBoundary(self, boundary, q1, q2):
+
+        self.neumannBoundary.append(boundary)
+
+        inode1 = boundary
+        inode2 = (boundary+1)%self.qtdNodes
+
+        self.nodes[inode1].q = q1
+        self.nodes[inode2].q = q2
+
+    def getBoundary(self, boundary):
+        inode1 = boundary
+        inode2 = (boundary+1)%self.qtdNodes
+
+        return [self.nodes[inode1], self.nodes[inode2]]
+
+
+
 
 class Node(object):
     """docstring for Node"""
     def __init__(self, inode, x, y):
         super(Node, self).__init__()
-        self.coords = [x, y]
+        self.coords = np.array([x, y])
         self.inode = inode
         self.eq = None
         self.f = None

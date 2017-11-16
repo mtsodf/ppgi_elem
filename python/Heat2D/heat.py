@@ -58,11 +58,11 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
         def solfunc(x, y):
             return sin(pi * x) * sin(pi * y)
 
-        def solfuncDx(x, y):
-            return pi*cos(pi * x) * sin(pi * y)
+        def solfuncDx(x):
+            return pi*cos(pi * x[0]) * sin(pi * x[1])
 
-        def solfuncDy(x, y):
-            return sin(pi * x) * pi * cos(pi * y)
+        def solfuncDy(x):
+            return sin(pi * x[0]) * pi * cos(pi * x[1])
 
         lx = 0.5
         ly = 1.0
@@ -93,6 +93,29 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
 
         contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
 
+
+    if entrada == 3:
+        def ffunc(x, y):
+            return 2 * pi * pi * sin(pi * x) * sin(pi * y)
+
+        def solfunc(x, y):
+            return sin(pi * x) * sin(pi * y)
+
+        def solfuncDx(x):
+            return pi*cos(pi * x[0]) * sin(pi * x[1])
+
+        def solfuncDy(x):
+            return sin(pi * x[0]) * pi * cos(pi * x[1])
+
+        lx = 1.0
+        ly = 1.0
+
+        x = np.linspace(0.0, lx, num=nx, endpoint=True)
+        y = np.linspace(0.0, ly, num=ny, endpoint=True)
+        dx = lx / nx
+        dy = ly / ny
+
+        contorno = [DIRICHLET, NEUMANN, DIRICHLET, DIRICHLET]
 
 # ***************************************************************
 #                        Criando os nós
@@ -167,6 +190,55 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
 
         print "Numero de equacoes"
         print neq
+
+# ***************************************************************
+#                Setando condicao de Neummann
+# ***************************************************************
+
+    if contorno[0] == NEUMANN:
+        for i in range(nx):
+            elem = elements[i + nx*0]
+            node1, node2 = elem.getBoundary(0)
+
+            n = np.array([0,-1])
+
+            du = np.array([solfuncDx(node1.coords), solfuncDy(node1.coords)])
+            qvetor = - np.dot(elem.Q, du)
+            q1 = np.dot(qvetor, n)
+
+            du = np.array([solfuncDx(node2.coords), solfuncDy(node2.coords)])
+            qvetor = - np.dot(elem.Q, du)
+            q2 = np.dot(qvetor, n)
+
+            elem.setBoundary(0, q1, q2)
+
+    if contorno[1] == NEUMANN:
+        for j in range(ny):
+            elem = elements[nx - 1+ nx*j]
+            node1, node2 = elem.getBoundary(1)
+
+            n = np.array([1, 0])
+
+            du = np.array([solfuncDx(node1.coords), solfuncDy(node1.coords)])
+            qvetor = - np.dot(elem.Q, du)
+            q1 = np.dot(qvetor, n)
+
+            du = np.array([solfuncDx(node2.coords), solfuncDy(node2.coords)])
+            qvetor = - np.dot(elem.Q, du)
+            q2 = np.dot(qvetor, n)
+
+
+            elem.setBoundary(1, q1, q2)
+
+    if contorno[2] == NEUMANN:
+        for i in range(nx):
+            elem = elements[i + nx*(ny-1)]
+            elem.setBoundary(2, 0.0, 1.0)
+
+    if contorno[3] == NEUMANN:
+        for j in range(ny):
+            elem = elements[nx*j]
+            elem.setBoundary(3, 0.0, 1.0)
 
 
 # ***************************************************************
