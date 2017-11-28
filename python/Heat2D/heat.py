@@ -7,6 +7,7 @@ from math import *
 import pylab as plt
 import mpl_toolkits.mplot3d.axes3d as p3
 from Element import *
+from FiniteElement import *
 
 
 DIRICHLET = 1
@@ -26,7 +27,7 @@ def getBoundary(i, j, nx, ny):
     return None
 
 
-def run_case(entrada, nx, ny, verbose = False, plot=False):
+def ConstructCase(entrada, nx, ny, verbose=False):
 
     nelem = nx * ny
     nnodes = (nx + 1) * (ny + 1)
@@ -51,6 +52,7 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
 
         contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
 
+
     if entrada == 1:
         def ffunc(x, y):
             return 2 * pi * pi * sin(pi * x) * sin(pi * y)
@@ -73,7 +75,6 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
         dy = ly / ny
 
         contorno = [DIRICHLET, NEUMANN, DIRICHLET, DIRICHLET]
-
 
 
     if entrada == 2:
@@ -117,6 +118,7 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
 
         contorno = [DIRICHLET, NEUMANN, DIRICHLET, DIRICHLET]
 
+
     if entrada == 4:
         def ffunc(x, y):
             return 2 * pi * pi * sin(pi * x) * sin(pi * y)
@@ -140,9 +142,27 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
 
         contorno = [NEUMANN, DIRICHLET, NEUMANN, NEUMANN]
 
-# ***************************************************************
-#                        Criando os nós
-# ***************************************************************
+    if entrada == 5:
+        lx = 1.0
+        ly = 1.0
+
+        def ffunc(x, y):
+            return 0.0
+
+        def solfunc(x, y):
+            return 100.0 if x >= 1.0 else 0.0
+
+        x = np.linspace(0.0, lx, num=nx, endpoint=True)
+        y = np.linspace(0.0, ly, num=ny, endpoint=True)
+
+        dx = lx / nx
+        dy = ly / ny
+
+        contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]        
+
+    # ***************************************************************
+    #                        Criando os nós
+    # ***************************************************************
 
     nodes = []
 
@@ -179,9 +199,9 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
 
     sol = np.array(sol)
 
-# ***************************************************************
-#                     Criando os elementos
-# ***************************************************************
+    # ***************************************************************
+    #                     Criando os elementos
+    # ***************************************************************
     iel = 0
     elements = []
 
@@ -214,9 +234,9 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
         print "Numero de equacoes"
         print neq
 
-# ***************************************************************
-#                Setando condicao de Neummann
-# ***************************************************************
+    # ***************************************************************
+    #                Setando condicao de Neummann
+    # ***************************************************************
 
     if contorno[0] == NEUMANN:
         for i in range(nx):
@@ -290,30 +310,28 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
             elem.setBoundary(3, q1, q2)
 
 
-# ***************************************************************
-#                Construindo Matriz de Rigidez
-# ***************************************************************
+    return elements, nodes, neq, sol
 
-    K = np.zeros((neq, neq))
 
-    for iel in range(nelem):
-        elem = elements[iel]
-        Klocal = elem.CalcKlocal()
+def run_case(entrada, nx, ny, verbose = False, plot=False):
 
-        for j, nodej in enumerate(elem.nodes):
-            for i, nodei in enumerate(elem.nodes):
-                globalI = nodei.eq
-                globalJ = nodej.eq
+    elements, nodes , neq,  sol = ConstructCase(entrada, nx, ny, verbose)
 
-                if globalI is not None and globalJ is not None:
-                    K[globalI, globalJ] += Klocal[i, j]
+    nelem = len(elements)
+    nnodes = len(nodes)
+
+    # ***************************************************************
+    #                Construindo Matriz de Rigidez
+    # ***************************************************************
+        
+    K = BuildStiffness(elements, neq)
 
     if verbose:
         print K
 
-# ***************************************************************
-#                   Calculo do Lado Direito
-# ***************************************************************
+    # ***************************************************************
+    #                   Calculo do Lado Direito
+    # ***************************************************************
 
     F = np.zeros(neq)
 
@@ -325,28 +343,25 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
             if node.eq is not None:
                 F[node.eq] += Flocal[i]
 
-# ***************************************************************
-#                 Adicao de Condicao de Neumann
-# ***************************************************************
 
 
-# ***************************************************************
-#                 Solucao do Sistema Linear
-# ***************************************************************
+    # ***************************************************************
+    #                 Solucao do Sistema Linear
+    # ***************************************************************
     calcsol = np.linalg.solve(K, F)
 
 
-# ***************************************************************
-#                 Diferenca entre solucoes
-# ***************************************************************
+    # ***************************************************************
+    #                 Diferenca entre solucoes
+    # ***************************************************************
     if verbose:
         print calcsol
         print sol
     print "Diferenca entre solucoes: ", np.linalg.norm(calcsol - sol)/np.linalg.norm(sol)
 
-# ***************************************************************
-#                Plot das Solucoes
-# ***************************************************************
+    # ***************************************************************
+    #                Plot das Solucoes
+    # ***************************************************************
     if plot:
         x = []
         y = []

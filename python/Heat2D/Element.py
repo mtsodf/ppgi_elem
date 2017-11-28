@@ -79,8 +79,9 @@ def FormsDeriv(e, n):
 
 class Element(object):
     """docstring for Element"""
-    def __init__(self, iel, Q=None):
+    def __init__(self, iel, Q=None, rho=1.0, c=1.0):
         super(Element, self).__init__()
+
         self.nodes = []
         self.iel = iel
         self.neumannBoundary = []
@@ -90,9 +91,13 @@ class Element(object):
         else:
             self.Q = Q
 
+        self.rho = rho
+        self.c = c
+
 
     def CalcKlocal(self):
         pass
+
 
     def GetCoords(self):
         coord = np.zeros((4,2))
@@ -102,15 +107,20 @@ class Element(object):
 
         return coord
 
+
     def AddNode(self, node):
         self.nodes.append(node)
+
+
+    def CalcMLocal(self):
+        pass
 
 
 
 class Quadrilateral(Element):
 
-    def __init__(self, iel, Q=None):
-        Element.__init__(self, iel, Q=None)
+    def __init__(self, iel, Q=None, rho=1.0, c=1.0):
+        Element.__init__(self, iel, Q, rho, c)
         self.qtdNodes = 4
 
     def CalcKlocal(self):
@@ -136,6 +146,16 @@ class Quadrilateral(Element):
 
         return Klocal
 
+
+    def CalcMLocal(self):
+        Mlocal = np.zeros((self.qtdNodes, self.qtdNodes))
+
+        for e, n, w in intPoints:
+
+            v = VecFuncForm(e, n)
+            Mlocal += w * (np.outer(v,v))
+
+        return Mlocal
 
     def CalcFlocal(self):
 
