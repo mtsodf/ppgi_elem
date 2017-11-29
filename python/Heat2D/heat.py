@@ -29,6 +29,9 @@ def getBoundary(i, j, nx, ny):
 
 def ConstructCase(entrada, nx, ny, verbose=False):
 
+    rho = None
+    c = None
+
     nelem = nx * ny
     nnodes = (nx + 1) * (ny + 1)
 
@@ -158,6 +161,9 @@ def ConstructCase(entrada, nx, ny, verbose=False):
         dx = lx / nx
         dy = ly / ny
 
+        rho = 1.0
+        c = 1.0
+
         contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]        
 
     # ***************************************************************
@@ -210,7 +216,7 @@ def ConstructCase(entrada, nx, ny, verbose=False):
 
             firstnode = i + j * (nx + 1)
 
-            elements.append(Quadrilateral(iel))
+            elements.append(Quadrilateral(iel, rho=rho, c=c))
             elements[-1].AddNode(nodes[firstnode])
             elements[-1].AddNode(nodes[firstnode + 1])
             elements[-1].AddNode(nodes[firstnode + nx + 2])
@@ -413,16 +419,18 @@ def main():
     parser.add_argument('--dy', type=float, default=0.1,
                         help='tamanho da célula na direção y')
     parser.add_argument('-v', '--verbose', action="store_true")
+    parser.add_argument('-p', '--plot', action="store_true")
     args = parser.parse_args()
 
     nx = args.nx
     ny = args.ny
     entrada = args.entrada
     verbose = args.verbose
+    plot = args.plot
 
 
 
-    residue = run_case(entrada, nx, ny, verbose)
+    residue = run_case(entrada, nx, ny, verbose, plot)
 
 
     print "Residuo calculado %f" % residue

@@ -79,7 +79,7 @@ def FormsDeriv(e, n):
 
 class Element(object):
     """docstring for Element"""
-    def __init__(self, iel, Q=None, rho=1.0, c=1.0):
+    def __init__(self, iel, Q=None, rho=None, c=None):
         super(Element, self).__init__()
 
         self.nodes = []
@@ -119,7 +119,7 @@ class Element(object):
 
 class Quadrilateral(Element):
 
-    def __init__(self, iel, Q=None, rho=1.0, c=1.0):
+    def __init__(self, iel, Q=None, rho=None, c=None):
         Element.__init__(self, iel, Q, rho, c)
         self.qtdNodes = 4
 
@@ -155,6 +155,9 @@ class Quadrilateral(Element):
             v = VecFuncForm(e, n)
             Mlocal += w * (np.outer(v,v))
 
+        print self.rho, self.c
+
+        Mlocal = Mlocal * self.rho * self.c
         return Mlocal
 
     def CalcFlocal(self):

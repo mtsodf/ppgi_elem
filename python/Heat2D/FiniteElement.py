@@ -27,7 +27,7 @@ def BuildM(elements, neq):
 
     for iel in range(nelem):
         elem = elements[iel]
-        Mlocal = elem.CalcMlocal()
+        Mlocal = elem.CalcMLocal()
 
         for j, nodej in enumerate(elem.nodes):
             for i, nodei in enumerate(elem.nodes):
