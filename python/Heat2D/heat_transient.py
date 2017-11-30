@@ -55,12 +55,12 @@ def main():
 
         for i, node in enumerate(elem.nodes):
             if node.eq is not None:
-                F[node.eq] += Flocal[i]    
+                F[node.eq] += Flocal[i]
 
     # ***************************************************************
     #                Construindo Matriz de Rigidez
     # ***************************************************************
-        
+
     K = BuildStiffness(elements, neq)
 
     M = BuildM(elements, neq)
@@ -69,8 +69,7 @@ def main():
 
     for node in nodes:
         if node.eq is not None:
-            d0[node.eq] = initialCondition(node.x, node.y)
-
+            d0[node.eq] = initialCondition(node.coords[0], node.coords[1])
 
     v0 = np.linalg.solve(M, F - np.dot(K, d0))
 
@@ -88,4 +87,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
+
