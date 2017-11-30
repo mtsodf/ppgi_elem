@@ -164,7 +164,54 @@ def ConstructCase(entrada, nx, ny, verbose=False):
         rho = 1.0
         c = 1.0
 
-        contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]        
+        contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
+
+    if entrada == 6:
+        nodes = []
+
+        nodes.append(Node(0, 0.0, 0.0))
+        nodes.append(Node(1, 0.5, 0.0))
+        nodes.append(Node(2, 1.0, 0.0))
+        nodes.append(Node(3, 0.0, 0.5))
+        nodes.append(Node(4, 0.5, 0.5))
+        nodes.append(Node(5, 1.0, 0.5))
+
+        for node in nodes:
+            node.f = 0.0
+
+            nodes[1].eq = 0
+            nodes[4].eq = 1
+
+            nodes[2].p = 100.0
+            nodes[5].p = 100.0
+
+            nodes[0].p = 0.0
+            nodes[3].p = 0.0
+
+            elems = []
+
+            elem0 = Quadrilateral(0)
+            elem0.AddNode(nodes[0])
+            elem0.AddNode(nodes[1])
+            elem0.AddNode(nodes[4])
+            elem0.AddNode(nodes[3])
+
+            elems.append(elem0)
+
+            elem1 = Quadrilateral(1)
+
+            elem1.AddNode(nodes[1])
+            elem1.AddNode(nodes[2])
+            elem1.AddNode(nodes[5])
+            elem1.AddNode(nodes[4])
+
+            elems.append(elem1)
+
+            neq = 2
+
+            sol = np.array([50.0, 50.0])
+
+        return elems, nodes, neq, sol
 
     # ***************************************************************
     #                        Criando os nós
@@ -227,18 +274,6 @@ def ConstructCase(entrada, nx, ny, verbose=False):
 
     neq = eqCurrent
 
-    if verbose:
-        print "Coordenadas dos nos"
-        print nodesCoord
-
-        print "Eq"
-        print eq
-
-        print "Nos dos elementos"
-        print lg
-
-        print "Numero de equacoes"
-        print neq
 
     # ***************************************************************
     #                Setando condicao de Neummann
@@ -319,6 +354,8 @@ def ConstructCase(entrada, nx, ny, verbose=False):
     return elements, nodes, neq, sol
 
 
+
+
 def run_case(entrada, nx, ny, verbose = False, plot=False):
 
     elements, nodes , neq,  sol = ConstructCase(entrada, nx, ny, verbose)
@@ -329,10 +366,11 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
     # ***************************************************************
     #                Construindo Matriz de Rigidez
     # ***************************************************************
-        
+
     K = BuildStiffness(elements, neq)
 
     if verbose:
+        print "Matriz de Rigidez"
         print K
 
     # ***************************************************************
@@ -349,7 +387,9 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
             if node.eq is not None:
                 F[node.eq] += Flocal[i]
 
-
+    if verbose:
+        print "Vetor de Carga"
+        print F
 
     # ***************************************************************
     #                 Solucao do Sistema Linear
@@ -361,7 +401,9 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
     #                 Diferenca entre solucoes
     # ***************************************************************
     if verbose:
+        print "Solucao Calculada"
         print calcsol
+        print "Solucao Analitica"
         print sol
     print "Diferenca entre solucoes: ", np.linalg.norm(calcsol - sol)/np.linalg.norm(sol)
 
