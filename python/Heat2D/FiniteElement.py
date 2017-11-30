@@ -35,6 +35,6 @@ def BuildM(elements, neq):
                 globalJ = nodej.eq
 
                 if globalI is not None and globalJ is not None:
-                    Mlocal[globalI, globalJ] += Mlocal[i, j]
+                    M[globalI, globalJ] += Mlocal[i, j]
 
     return M
