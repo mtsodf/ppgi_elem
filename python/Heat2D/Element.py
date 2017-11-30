@@ -155,8 +155,6 @@ class Quadrilateral(Element):
             v = VecFuncForm(e, n)
             Mlocal += w * (np.outer(v,v))
 
-        print self.rho, self.c
-
         Mlocal = Mlocal * self.rho * self.c
         return Mlocal
 
