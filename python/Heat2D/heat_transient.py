@@ -3,6 +3,7 @@
 
 from heat import ConstructCase
 from FiniteElement import *
+from PlotMap import *
 import argparse
 
 
@@ -33,10 +34,10 @@ def main():
 
     nelem = len(elements)
 
-    def initialCondition(x, y): return 0.0
+    def initialCondition(x, y):
+        return 0.0
 
     alpha = 0.5
-
     deltaT = 0.1
 
     nsteps = 10
@@ -69,9 +70,15 @@ def main():
         if node.eq is not None:
             d0[node.eq] = initialCondition(node.coords[0], node.coords[1])
 
+    X = np.array([node.coords[0] for node in nodes if node.eq is not None])
+    Y = np.array([node.coords[1] for node in nodes if node.eq is not None])
+
+
+    plot_surface(X, Y, d0, out='step_0.png')
+
     v0 = np.linalg.solve(M, F - np.dot(K, d0))
 
-    for step in range(nsteps):
+    for step in range(1, nsteps + 1):
         dpreditor = d0 + deltaT * (1 - alpha) * v0
 
         vant = v0
@@ -80,7 +87,9 @@ def main():
 
         d0 = d0 + deltaT * (1 - alpha) * vant + alpha * v0 * deltaT
 
+        print d0
 
+        plot_surface(X, Y, d0, out='step_%d.png' % step)
 
 
 if __name__ == '__main__':
