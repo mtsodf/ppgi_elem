@@ -15,7 +15,7 @@ NEUMANN = 2
 
 
 def getBoundary(i, j, nx, ny):
-    if  j == 0:
+    if j == 0:
         return 0
     if i == nx:
         return 1
@@ -32,8 +32,8 @@ def ConstructCase(entrada, nx, ny, verbose=False):
     rho = None
     c = None
 
-    nelem = nx * ny
-    nnodes = (nx + 1) * (ny + 1)
+    ffunc = None
+    solfunc = None
 
     sol = []
 
@@ -52,11 +52,9 @@ def ConstructCase(entrada, nx, ny, verbose=False):
         dx = lx / nx
         dy = ly / ny
 
-
         contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
 
-
-    if entrada == 1:
+    elif entrada == 1:
         def ffunc(x, y):
             return 2 * pi * pi * sin(pi * x) * sin(pi * y)
 
@@ -64,7 +62,7 @@ def ConstructCase(entrada, nx, ny, verbose=False):
             return sin(pi * x) * sin(pi * y)
 
         def solfuncDx(x):
-            return pi*cos(pi * x[0]) * sin(pi * x[1])
+            return pi * cos(pi * x[0]) * sin(pi * x[1])
 
         def solfuncDy(x):
             return sin(pi * x[0]) * pi * cos(pi * x[1])
@@ -79,8 +77,7 @@ def ConstructCase(entrada, nx, ny, verbose=False):
 
         contorno = [DIRICHLET, NEUMANN, DIRICHLET, DIRICHLET]
 
-
-    if entrada == 2:
+    elif entrada == 2:
         def ffunc(x, y):
             return 2 * pi * pi * sin(pi * x) * sin(pi * y)
 
@@ -97,8 +94,7 @@ def ConstructCase(entrada, nx, ny, verbose=False):
 
         contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
 
-
-    if entrada == 3:
+    elif entrada == 3:
         def ffunc(x, y):
             return 2 * pi * pi * sin(pi * x) * sin(pi * y)
 
@@ -106,7 +102,7 @@ def ConstructCase(entrada, nx, ny, verbose=False):
             return sin(pi * x) * sin(pi * y)
 
         def solfuncDx(x):
-            return pi*cos(pi * x[0]) * sin(pi * x[1])
+            return pi * cos(pi * x[0]) * sin(pi * x[1])
 
         def solfuncDy(x):
             return sin(pi * x[0]) * pi * cos(pi * x[1])
@@ -121,8 +117,7 @@ def ConstructCase(entrada, nx, ny, verbose=False):
 
         contorno = [DIRICHLET, NEUMANN, DIRICHLET, DIRICHLET]
 
-
-    if entrada == 4:
+    elif entrada == 4:
         def ffunc(x, y):
             return 2 * pi * pi * sin(pi * x) * sin(pi * y)
 
@@ -130,7 +125,7 @@ def ConstructCase(entrada, nx, ny, verbose=False):
             return sin(pi * x) * sin(pi * y)
 
         def solfuncDx(x):
-            return pi*cos(pi * x[0]) * sin(pi * x[1])
+            return pi * cos(pi * x[0]) * sin(pi * x[1])
 
         def solfuncDy(x):
             return sin(pi * x[0]) * pi * cos(pi * x[1])
@@ -145,7 +140,7 @@ def ConstructCase(entrada, nx, ny, verbose=False):
 
         contorno = [NEUMANN, DIRICHLET, NEUMANN, NEUMANN]
 
-    if entrada == 5:
+    elif entrada == 5:
         lx = 1.0
         ly = 1.0
 
@@ -269,11 +264,9 @@ def ConstructCase(entrada, nx, ny, verbose=False):
             elements[-1].AddNode(nodes[firstnode + nx + 2])
             elements[-1].AddNode(nodes[firstnode + nx + 1])
 
-
             iel += 1
 
     neq = eqCurrent
-
 
     # ***************************************************************
     #                Setando condicao de Neummann
@@ -281,10 +274,10 @@ def ConstructCase(entrada, nx, ny, verbose=False):
 
     if contorno[0] == NEUMANN:
         for i in range(nx):
-            elem = elements[i + nx*0]
+            elem = elements[i + nx * 0]
             node1, node2 = elem.getBoundary(0)
 
-            n = np.array([0,-1])
+            n = np.array([0, -1])
 
             du = np.array([solfuncDx(node1.coords), solfuncDy(node1.coords)])
             qvetor = - np.dot(elem.Q, du)
@@ -298,7 +291,7 @@ def ConstructCase(entrada, nx, ny, verbose=False):
 
     if contorno[1] == NEUMANN:
         for j in range(ny):
-            elem = elements[nx - 1+ nx*j]
+            elem = elements[nx - 1 + nx * j]
             node1, node2 = elem.getBoundary(1)
 
             n = np.array([1, 0])
@@ -311,12 +304,11 @@ def ConstructCase(entrada, nx, ny, verbose=False):
             qvetor = - np.dot(elem.Q, du)
             q2 = np.dot(qvetor, n)
 
-
             elem.setBoundary(1, q1, q2)
 
     if contorno[2] == NEUMANN:
         for i in range(nx):
-            elem = elements[i + nx*(ny-1)]
+            elem = elements[i + nx * (ny - 1)]
 
             node1, node2 = elem.getBoundary(2)
 
@@ -334,7 +326,7 @@ def ConstructCase(entrada, nx, ny, verbose=False):
 
     if contorno[3] == NEUMANN:
         for j in range(ny):
-            elem = elements[nx*j]
+            elem = elements[nx * j]
 
             node1, node2 = elem.getBoundary(3)
 
@@ -350,15 +342,12 @@ def ConstructCase(entrada, nx, ny, verbose=False):
 
             elem.setBoundary(3, q1, q2)
 
-
     return elements, nodes, neq, sol
 
 
+def run_case(entrada, nx, ny, verbose=False, plot=False):
 
-
-def run_case(entrada, nx, ny, verbose = False, plot=False):
-
-    elements, nodes , neq,  sol = ConstructCase(entrada, nx, ny, verbose)
+    elements, nodes, neq, sol = ConstructCase(entrada, nx, ny, verbose)
 
     nelem = len(elements)
     nnodes = len(nodes)
@@ -396,7 +385,6 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
     # ***************************************************************
     calcsol = np.linalg.solve(K, F)
 
-
     # ***************************************************************
     #                 Diferenca entre solucoes
     # ***************************************************************
@@ -405,7 +393,7 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
         print calcsol
         print "Solucao Analitica"
         print sol
-    print "Diferenca entre solucoes: ", np.linalg.norm(calcsol - sol)/np.linalg.norm(sol)
+    print "Diferenca entre solucoes: ", np.linalg.norm(calcsol - sol) / np.linalg.norm(sol)
 
     # ***************************************************************
     #                Plot das Solucoes
@@ -444,7 +432,7 @@ def run_case(entrada, nx, ny, verbose = False, plot=False):
 
         plt.show()
 
-    return np.linalg.norm(calcsol - sol)/np.linalg.norm(sol)
+    return np.linalg.norm(calcsol - sol) / np.linalg.norm(sol)
 
 
 def main():
@@ -470,13 +458,10 @@ def main():
     verbose = args.verbose
     plot = args.plot
 
-
-
     residue = run_case(entrada, nx, ny, verbose, plot)
-
 
     print "Residuo calculado %f" % residue
 
+
 if __name__ == '__main__':
     main()
-
