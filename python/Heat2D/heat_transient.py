@@ -5,6 +5,7 @@ from heat import ConstructCase
 from FiniteElement import *
 import argparse
 
+
 def main():
 
     parser = argparse.ArgumentParser(description='Transferencia de Calor 2D')
@@ -28,14 +29,11 @@ def main():
     verbose = args.verbose
     plot = args.plot
 
-
-
     elements, nodes, neq, sol = ConstructCase(entrada, nx, ny, verbose=False)
-
 
     nelem = len(elements)
 
-    initialCondition = lambda x,y:  0.0
+    def initialCondition(x, y): return 0.0
 
     alpha = 0.5
 
@@ -74,17 +72,16 @@ def main():
     v0 = np.linalg.solve(M, F - np.dot(K, d0))
 
     for step in range(nsteps):
-        dpreditor = d0 + deltaT*(1-alpha)*v0
+        dpreditor = d0 + deltaT * (1 - alpha) * v0
 
         vant = v0
 
-        v0 = np.linalg.solve(M + alpha*deltaT*K, F - K*dpreditor)
+        v0 = np.linalg.solve(M + alpha * deltaT * K, F - K * dpreditor)
 
-        d0 = d0 + deltaT*(1-alpha)*vant + alpha*v0*deltaT
+        d0 = d0 + deltaT * (1 - alpha) * vant + alpha * v0 * deltaT
 
 
 
 
 if __name__ == '__main__':
     main()
-
