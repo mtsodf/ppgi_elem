@@ -149,11 +149,19 @@ class Quadrilateral(Element):
 
     def CalcMLocal(self):
         Mlocal = np.zeros((self.qtdNodes, self.qtdNodes))
+        
+        coord = self.GetCoords()
 
         for e, n, w in intPoints:
 
+            D = FormsDeriv(e, n)
+
+            J = np.dot(D, coord)
+
+            detJ = np.linalg.det(J)
+
             v = VecFuncForm(e, n)
-            Mlocal += w * (np.outer(v,v))
+            Mlocal += w * (np.outer(v,v)) * detJ
 
         Mlocal = Mlocal * self.rho * self.c
         return Mlocal
