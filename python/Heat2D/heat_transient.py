@@ -7,6 +7,41 @@ from PlotMap import *
 import argparse
 
 
+def SolveSedo(M, K, F, d0, nsteps, alpha, deltaT):
+    v0 = np.linalg.solve(M, F - np.dot(K, d0))
+
+    print "v0 ", v0.shape
+
+    sols = []
+
+    for step in range(1, nsteps + 1):
+        dpreditor = d0 + deltaT * (1 - alpha) * v0
+        vant = v0
+
+        v0 = np.linalg.solve(M + alpha * deltaT * K, F - np.dot(K, dpreditor))
+        d0 = d0 + deltaT * (1 - alpha) * vant + alpha * v0 * deltaT
+
+
+        sols.append(d0.copy())
+
+    return sols
+
+def SolveSedoNewtonImplicit(M, K, F, d0, nsteps, deltaT):
+    sols = []
+
+    K = K*deltaT
+    F = F*deltaT
+
+    dcurrent = d0
+    for step in range(1, nsteps + 1):   
+        dprevious = dcurrent
+
+        dcurrent = np.linalg.solve(M + K, F + np.dot(M, dprevious))
+
+        sols.append(dcurrent.copy())
+
+    return sols
+
 def main():
 
     parser = argparse.ArgumentParser(description='Transferencia de Calor 2D')
@@ -38,8 +73,7 @@ def main():
         return 0.0
 
     alpha = 0.5
-    deltaT = 0.1
-
+    deltaT = 10.0
     nsteps = 10
 
     # ***************************************************************
@@ -61,8 +95,10 @@ def main():
     # ***************************************************************
 
     K = BuildStiffness(elements, neq)
+    print "Tamanho K -> ", K.shape
 
     M = BuildM(elements, neq)
+    print "Tamanho M -> ", M.shape
 
     d0 = np.zeros(neq)
 
@@ -73,23 +109,34 @@ def main():
     X = np.array([node.coords[0] for node in nodes if node.eq is not None])
     Y = np.array([node.coords[1] for node in nodes if node.eq is not None])
 
+    print "Size x,y -> ", len(X), len(Y)
+    #plot_surface(X, Y, d0, out='step_0.png')
+    fig = plt.figure(figsize=(16, 9))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter3D(np.ravel(X), np.ravel(Y), np.ravel(d0))
+    print len(d0)
+    plt.savefig('step_0.png')
+    plt.close()
 
-    plot_surface(X, Y, d0, out='step_0.png')
+    #sols = SolveSedo(M, K, F, d0, nsteps, alpha, deltaT)
 
-    v0 = np.linalg.solve(M, F - np.dot(K, d0))
+    sols = SolveSedoNewtonImplicit(M, K, F, d0, nsteps, deltaT)
 
-    for step in range(1, nsteps + 1):
-        dpreditor = d0 + deltaT * (1 - alpha) * v0
 
-        vant = v0
+    for step in range(1, nsteps+1):
+        fig = plt.figure(figsize=(16, 9))
+        ax = fig.add_subplot(111, projection='3d')
 
-        v0 = np.linalg.solve(M + alpha * deltaT * K, F - K * dpreditor)
+        ax.scatter3D(np.ravel(X), np.ravel(Y), np.ravel(sols[step-1]))
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        ax.set_title("Solucao Calculada")
 
-        d0 = d0 + deltaT * (1 - alpha) * vant + alpha * v0 * deltaT
+        plt.savefig('step_%d.png' % step)    
+        plt.close()
 
-        print d0
 
-        plot_surface(X, Y, d0, out='step_%d.png' % step)
 
 
 if __name__ == '__main__':
