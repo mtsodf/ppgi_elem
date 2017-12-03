@@ -73,7 +73,7 @@ def main():
         return 0.0
 
     alpha = 0.5
-    deltaT = 10.0
+    deltaT = 100.0
     nsteps = 10
 
     # ***************************************************************
@@ -111,7 +111,7 @@ def main():
 
     fig = plt.figure(figsize=(16, 9))
     ax = fig.add_subplot(111)
-    plot_map(X, Y, d0, ax=ax, fig=fig, zmin=0, zmax=100)
+    plot_map(X, Y, d0, ax=ax, fig=fig, zmin=0, zmax=1)
     plt.savefig('step_0.png')
     plt.close()
 
@@ -125,7 +125,7 @@ def main():
         ax = fig.add_subplot(111)
 
 
-        plot_map(X, Y, sols[step-1], ax=ax, fig=fig, zmin=0, zmax=100)
+        plot_map(X, Y, sols[step-1], ax=ax, fig=fig, zmin=0, zmax=1)
 
         plt.savefig('step_%d.png' % step)    
         plt.close()
