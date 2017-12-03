@@ -7,14 +7,16 @@ intPoints = [[-w, -w, 1.0], [w, -w, 1.0], [w, w, 1.0], [-w, w, 1.0]]
 
 def FuncForm1d(e, vert):
     if vert == 0:
-        return (1.0 - e)/2
+        return (1.0 - e) / 2
     if vert == 1:
-        return (1.0 + e)/2
+        return (1.0 + e) / 2
 
     return None
 
+
 def VecFuncForm1d(e):
     return np.array([FuncForm1d(e, 0), FuncForm1d(e, 1)])
+
 
 def FuncForm(e, n, vert):
 
@@ -28,6 +30,7 @@ def FuncForm(e, n, vert):
         return (1.0 - e) * (1.0 + n) / 4.0
 
     return float('nan')
+
 
 def VecFuncForm(e, n):
     v = np.zeros((4, 1))
@@ -76,9 +79,9 @@ def FormsDeriv(e, n):
     return r
 
 
-
 class Element(object):
     """docstring for Element"""
+
     def __init__(self, iel, Q=None, rho=None, c=None):
         super(Element, self).__init__()
 
@@ -94,27 +97,22 @@ class Element(object):
         self.rho = rho
         self.c = c
 
-
     def CalcKlocal(self):
         pass
 
-
     def GetCoords(self):
-        coord = np.zeros((4,2))
+        coord = np.zeros((4, 2))
 
         for i in range(4):
-            coord[i,:] = self.nodes[i].coords
+            coord[i, :] = self.nodes[i].coords
 
         return coord
-
 
     def AddNode(self, node):
         self.nodes.append(node)
 
-
     def CalcMLocal(self):
         pass
-
 
 
 class Quadrilateral(Element):
@@ -142,14 +140,13 @@ class Quadrilateral(Element):
 
             Bt = np.transpose(B)
 
-            Klocal = Klocal + w*np.dot(np.dot(Bt, self.Q), B) * detJ
+            Klocal = Klocal + w * np.dot(np.dot(Bt, self.Q), B) * detJ
 
         return Klocal
 
-
     def CalcMLocal(self):
         Mlocal = np.zeros((self.qtdNodes, self.qtdNodes))
-        
+
         coord = self.GetCoords()
 
         for e, n, w in intPoints:
@@ -161,7 +158,7 @@ class Quadrilateral(Element):
             detJ = np.linalg.det(J)
 
             v = VecFuncForm(e, n)
-            Mlocal += w * (np.outer(v,v)) * detJ
+            Mlocal += w * (np.outer(v, v)) * detJ
 
         Mlocal = Mlocal * self.rho * self.c
         return Mlocal
@@ -176,11 +173,8 @@ class Quadrilateral(Element):
             fValues[i] = node.f
             P[i] = node.p
 
-
         fValues = np.transpose(fValues)
         coord = self.GetCoords()
-
-
 
         for e, n, w in intPoints:
             phi = VecFuncForm(e, n)
@@ -191,18 +185,15 @@ class Quadrilateral(Element):
 
             F = F + np.dot(phi, np.dot(fValues, phi)) * detJ
 
-
         # Parcela da condicao de contorno de Dirichlet
         F = F - np.dot(self.CalcKlocal(), P)
 
-
-        #Parcela da condicao de contorno de Neumann
+        # Parcela da condicao de contorno de Neumann
         for boundary in self.neumannBoundary:
-
 
             node1, node2 = self.getBoundary(boundary)
             inode1 = boundary
-            inode2 = (boundary+1)%self.qtdNodes
+            inode2 = (boundary + 1) % self.qtdNodes
             Q = np.array([node1.q, node2.q])
 
             Qf = np.zeros(2)
@@ -212,11 +203,10 @@ class Quadrilateral(Element):
 
                 phi = VecFuncForm1d(e)
 
-                Qf += np.dot(phi, np.dot(Q, phi)) *  detJ/2
+                Qf += np.dot(phi, np.dot(Q, phi)) * detJ / 2
 
             F[inode1] -= Qf[0]
             F[inode2] -= Qf[1]
-
 
         return F
 
@@ -225,22 +215,21 @@ class Quadrilateral(Element):
         self.neumannBoundary.append(boundary)
 
         inode1 = boundary
-        inode2 = (boundary+1)%self.qtdNodes
+        inode2 = (boundary + 1) % self.qtdNodes
 
         self.nodes[inode1].q = q1
         self.nodes[inode2].q = q2
 
     def getBoundary(self, boundary):
         inode1 = boundary
-        inode2 = (boundary+1)%self.qtdNodes
+        inode2 = (boundary + 1) % self.qtdNodes
 
         return [self.nodes[inode1], self.nodes[inode2]]
 
 
-
-
 class Node(object):
     """docstring for Node"""
+
     def __init__(self, inode, x, y):
         super(Node, self).__init__()
         self.coords = np.array([x, y])

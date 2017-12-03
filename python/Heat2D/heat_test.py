@@ -15,13 +15,11 @@ class TestHeat(unittest.TestCase):
 
         self.assertLess(diff, 1e-3)
 
-
     def test_Neumann(self):
 
         diff = run_case(1, 60, 60)
 
         self.assertLess(diff, 1e-3)
-
 
     def test_Neumann_non_hom(self):
 
@@ -29,10 +27,10 @@ class TestHeat(unittest.TestCase):
 
         self.assertLess(diff, 1e-3)
 
-
         diff = run_case(4, 90, 90)
 
         self.assertLess(diff, 1e-3)
+
 
 if __name__ == '__main__':
     unittest.main()

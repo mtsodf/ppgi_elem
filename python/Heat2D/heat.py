@@ -149,7 +149,7 @@ def ConstructCase(entrada, nx, ny, verbose=False):
             return 0.0
 
         def solfunc(x, y):
-            return 1.0 if y >= 1.0 else 0.0
+            return 1.0 if y >= 1.0 or x >= 1 else 0.0
 
         x = np.linspace(0.0, lx, num=nx, endpoint=True)
         y = np.linspace(0.0, ly, num=ny, endpoint=True)
@@ -394,7 +394,7 @@ def run_case(entrada, nx, ny, verbose=False, plot=False):
         print calcsol
         print "Solucao Analitica"
         print sol
-    print "Diferenca entre solucoes: ", np.linalg.norm(calcsol - sol) / np.linalg.norm(sol)
+        print "Diferenca entre solucoes: ", np.linalg.norm(calcsol - sol) / np.linalg.norm(sol)
 
     # ***************************************************************
     #                Plot das Solucoes
@@ -438,9 +438,9 @@ def run_case(entrada, nx, ny, verbose=False, plot=False):
 
         fig = plt.figure(figsize=(16, 9))
         ax = fig.add_subplot(111)
-        plot_map(X, Y, calcsol, ax=ax, fig=fig, zmin=0, zmax=100)
+        plot_map(X, Y, calcsol, ax=ax, fig=fig, zmin=0, zmax=1)
         plt.savefig('permanent.png')
-        plt.close()    
+        plt.close()
 
     return np.linalg.norm(calcsol - sol) / np.linalg.norm(sol)
 
