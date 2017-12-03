@@ -76,14 +76,12 @@ def main():
     dt = args.dt
     nsteps = args.nsteps
 
-
     elements, nodes, neq, sol = ConstructCase(entrada, nx, ny, verbose=False)
 
     nelem = len(elements)
 
     def initialCondition(x, y):
         return 0.0
-
 
     # ***************************************************************
     #                   Calculo do Lado Direito
@@ -137,7 +135,8 @@ def main():
         fig = plt.figure(figsize=(16, 9))
         ax = fig.add_subplot(111)
 
-        plot_map(X, Y, sols[step], ax=ax, fig=fig, zmin=zmin, zmax=zmax+zmax/1000)
+        plot_map(X, Y, sols[step], ax=ax, fig=fig,
+                 zmin=zmin, zmax=zmax + zmax / 1000)
         plt.suptitle("t = %6.4f" % (step * dt))
 
         plt.savefig('step_%s.png' % str(step).zfill(2))
