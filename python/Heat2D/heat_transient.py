@@ -109,12 +109,9 @@ def main():
     X = np.array([node.coords[0] for node in nodes if node.eq is not None])
     Y = np.array([node.coords[1] for node in nodes if node.eq is not None])
 
-    print "Size x,y -> ", len(X), len(Y)
-    #plot_surface(X, Y, d0, out='step_0.png')
     fig = plt.figure(figsize=(16, 9))
-    ax = fig.add_subplot(111, projection='3d')
-    ax.scatter3D(np.ravel(X), np.ravel(Y), np.ravel(d0))
-    print len(d0)
+    ax = fig.add_subplot(111)
+    plot_map(X, Y, d0, ax=ax, fig=fig, zmin=0, zmax=100)
     plt.savefig('step_0.png')
     plt.close()
 
@@ -125,13 +122,10 @@ def main():
 
     for step in range(1, nsteps+1):
         fig = plt.figure(figsize=(16, 9))
-        ax = fig.add_subplot(111, projection='3d')
+        ax = fig.add_subplot(111)
 
-        ax.scatter3D(np.ravel(X), np.ravel(Y), np.ravel(sols[step-1]))
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
-        ax.set_title("Solucao Calculada")
+
+        plot_map(X, Y, sols[step-1], ax=ax, fig=fig, zmin=0, zmax=100)
 
         plt.savefig('step_%d.png' % step)    
         plt.close()
