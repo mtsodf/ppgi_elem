@@ -8,6 +8,7 @@ import pylab as plt
 import mpl_toolkits.mplot3d.axes3d as p3
 from Element import *
 from FiniteElement import *
+from PlotMap import *
 
 
 DIRICHLET = 1
@@ -148,7 +149,7 @@ def ConstructCase(entrada, nx, ny, verbose=False):
             return 0.0
 
         def solfunc(x, y):
-            return 100.0 if x >= 1.0 else 0.0
+            return 1.0 if y >= 1.0 else 0.0
 
         x = np.linspace(0.0, lx, num=nx, endpoint=True)
         y = np.linspace(0.0, ly, num=ny, endpoint=True)
@@ -431,6 +432,15 @@ def run_case(entrada, nx, ny, verbose=False, plot=False):
         ax.set_title("Solucao Analitica")
 
         plt.show()
+
+        X = np.array([node.coords[0] for node in nodes if node.eq is not None])
+        Y = np.array([node.coords[1] for node in nodes if node.eq is not None])
+
+        fig = plt.figure(figsize=(16, 9))
+        ax = fig.add_subplot(111)
+        plot_map(X, Y, calcsol, ax=ax, fig=fig, zmin=0, zmax=100)
+        plt.savefig('permanent.png')
+        plt.close()    
 
     return np.linalg.norm(calcsol - sol) / np.linalg.norm(sol)
 
