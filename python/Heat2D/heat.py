@@ -53,6 +53,9 @@ def ConstructCase(entrada, nx, ny, verbose=False):
         dx = lx / nx
         dy = ly / ny
 
+        rho = 1.0
+        c = 1.0
+
         contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
 
     elif entrada == 1:
@@ -76,6 +79,9 @@ def ConstructCase(entrada, nx, ny, verbose=False):
         dx = lx / nx
         dy = ly / ny
 
+        rho = 1.0
+        c = 1.0
+
         contorno = [DIRICHLET, NEUMANN, DIRICHLET, DIRICHLET]
 
     elif entrada == 2:
@@ -92,6 +98,9 @@ def ConstructCase(entrada, nx, ny, verbose=False):
         y = np.linspace(0.0, ly, num=ny, endpoint=True)
         dx = lx / nx
         dy = ly / ny
+
+        rho = 1.0
+        c = 1.0
 
         contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
 
@@ -116,6 +125,9 @@ def ConstructCase(entrada, nx, ny, verbose=False):
         dx = lx / nx
         dy = ly / ny
 
+        rho = 1.0
+        c = 1.0
+
         contorno = [DIRICHLET, NEUMANN, DIRICHLET, DIRICHLET]
 
     elif entrada == 4:
@@ -138,6 +150,9 @@ def ConstructCase(entrada, nx, ny, verbose=False):
         y = np.linspace(0.0, ly, num=ny, endpoint=True)
         dx = lx / nx
         dy = ly / ny
+
+        rho = 1.0
+        c = 1.0
 
         contorno = [NEUMANN, DIRICHLET, NEUMANN, NEUMANN]
 
