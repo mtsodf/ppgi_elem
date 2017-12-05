@@ -12,15 +12,15 @@ def SolveSedo(M, K, F, d0, nsteps, alpha, dt):
     v0 = np.linalg.solve(M, F - np.dot(K, d0))
 
     print "v0 ", v0.shape
+    print "alpha = ", alpha
 
     sols = []
 
     for step in range(1, nsteps + 1):
-        dpreditor = d0 + dt * (1 - alpha) * v0
-        vant = v0
+        dpreditor = d0 + np.dot(dt * (1 - alpha), v0)
 
-        v0 = np.linalg.solve(M + alpha * dt * K, F - np.dot(K, dpreditor))
-        d0 = d0 + dt * (1 - alpha) * vant + alpha * v0 * dt
+        v0 = np.linalg.solve(M + np.dot(alpha * dt, K) , F - np.dot(K, dpreditor))
+        d0 = dpreditor + np.dot(alpha * dt, v0) 
 
         sols.append(d0.copy())
 
@@ -59,9 +59,9 @@ def main():
                         help='tamanho da célula na direção y')
     parser.add_argument('--alpha', type=float, default=0.5,
                         help='alpha para método de solução')
-    parser.add_argument('--dt', type=float, default=0.05,
+    parser.add_argument('--dt', type=float, default=0.002,
                         help='dt para método de solução')
-    parser.add_argument('--nsteps', type=float, default=20,
+    parser.add_argument('--nsteps', type=int, default=40,
                         help='numero de passos de tempo')
 
     parser.add_argument('-n', '--newton', action="store_true")
@@ -119,9 +119,13 @@ def main():
     sols = [d0]
 
     if newton:
+        print "Utilizando metodo de newton"
         sols.extend(SolveSedoNewtonImplicit(M, K, F, d0, nsteps, dt))
     else:
         sols.extend(SolveSedo(M, K, F, d0, nsteps, alpha, dt))
+
+
+    print sols[-1]
 
     zmax = np.amax(sols[0])
     zmin = np.amin(sols[0])
