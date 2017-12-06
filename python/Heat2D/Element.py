@@ -97,6 +97,8 @@ class Element(object):
         self.rho = rho
         self.c = c
 
+        self.qtdNodes = None
+
     def CalcKlocal(self):
         pass
 
@@ -113,6 +115,20 @@ class Element(object):
 
     def CalcMLocal(self):
         pass
+
+    def QtdNodes(self):
+        return len(self.nodes)
+
+    def GetValue(self, sol):
+        val = 0.0
+
+        for node in self.nodes:
+            if node.eq is None:
+                val += node.p
+            else:
+                val += sol[node.eq]
+
+        return val / self.QtdNodes()
 
 
 class Quadrilateral(Element):
