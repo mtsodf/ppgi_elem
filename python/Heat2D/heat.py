@@ -164,7 +164,7 @@ def ConstructCase(entrada, nx, ny, verbose=False):
             return 0.0
 
         def solfunc(x, y):
-            return 1.0 if y >= 1.0 or x >= 1 else 0.0
+            return 1.0 if y >= 1.0 or x <= 0.0 else 0.0
 
         x = np.linspace(0.0, lx, num=nx, endpoint=True)
         y = np.linspace(0.0, ly, num=ny, endpoint=True)
@@ -448,7 +448,7 @@ def run_case(entrada, nx, ny, verbose=False, plot=False):
 
         fig = plt.figure(figsize=(16, 9))
         ax = fig.add_subplot(111)
-        plot_map(X, Y, Z, ax=ax, fig=fig, zmin=0, zmax=1)
+        plot_map(X, Y, Z, ax=ax, fig=fig, zmin=np.amin(z2), zmax=np.amax(z2))
         plt.savefig('permanent.png')
         plt.close()
 

@@ -65,7 +65,8 @@ def main():
                         help='numero de passos de tempo')
 
     parser.add_argument('-n', '--newton', action="store_true")
-    parser.add_argument('-p', '--plot', action="store_true")
+    parser.add_argument('-p', '--plot3D', action="store_true")
+
     args = parser.parse_args()
 
     nx = args.nx
@@ -75,6 +76,7 @@ def main():
     alpha = args.alpha
     dt = args.dt
     nsteps = args.nsteps
+    plot3D = args.plot3D
 
     elements, nodes, neq, sol = ConstructCase(entrada, nx, ny, verbose=False)
 
@@ -124,9 +126,6 @@ def main():
     else:
         sols.extend(SolveSedo(M, K, F, d0, nsteps, alpha, dt))
 
-
-    print sols[-1]
-
     zmax = np.amax(sols[0])
     zmin = np.amin(sols[0])
 
@@ -137,12 +136,19 @@ def main():
 
     for step in range(nsteps + 1):
         fig = plt.figure(figsize=(16, 9))
-        ax = fig.add_subplot(111)
+
+        if plot3D:
+            ax = fig.add_subplot(111, projection='3d')
+        else:
+            ax = fig.add_subplot(111)
 
         X, Y, Z = GetGridValues(nodes, sols[step])
 
-        plot_map(X, Y, Z, ax=ax, fig=fig,
-                 zmin=zmin, zmax=zmax + zmax / 1000)
+        if plot3D:
+            plot_surface(X, Y, Z, ax=ax, fig=fig)
+        else:
+            plot_map(X, Y, Z, ax=ax, fig=fig,
+                     zmin=zmin, zmax=zmax + zmax / 1000)
         plt.suptitle("t = %6.4f" % (step * dt))
 
         plt.savefig('step_%s.png' % str(step).zfill(2))

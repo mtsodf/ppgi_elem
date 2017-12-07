@@ -39,31 +39,33 @@ def plot_elements(elements, sol):
     plt.show()
 
 
-def plot_surface(x, y, z, ax=None, n=20, out='surface.png'):
+def plot_surface(x, y, z, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None, zmax=None, ax=None, fig=None, n=20, out='surface.png'):
 
     if ax is None:
         fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
+        ax = fig.add_subplot(111)
 
-    finter = interpolate.interp2d(x, y, z)
+    xmin = np.amin(x) if xmin is None else xmin
+    xmax = np.amax(x) if xmax is None else xmax
 
-    X = np.linspace(np.amin(x), np.amax(x), n, endpoint=True)
-    Y = np.linspace(np.amin(y), np.amax(y), n, endpoint=True)
-    Z = np.zeros(n * n)
+    ymin = np.amin(y) if ymin is None else ymin
+    ymax = np.amax(y) if ymax is None else ymax
 
-    c = 0
-    for j in range(n):
-        for i in range(n):
-            Z[c] = finter(X[i], Y[j])
-            c += 1
+    # define grid.
+    X = np.linspace(xmin, xmax, n, endpoint=True)
+    Y = np.linspace(ymin, ymax, n, endpoint=True)
+    # grid the data.
+    Z = griddata(x, y, z, X, Y, interp='linear')
 
-    X, Y = np.meshgrid(X, Y)
+    zmin = np.amin(Z) if zmin is None else zmin
+    zmax = np.amax(Z) if zmax is None else zmax
+
     Z = np.reshape(Z, (n, n))
 
-    ax.plot_surface(X, Y, Z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    # ax.plot_surface(X, Y, Z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    ax.scatter3D(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
 
     plt.savefig(out)
-
 
 def plot_map(x, y, z, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None, zmax=None, ax=None, fig=None, n=20, out='heatmap.png'):
 
@@ -82,8 +84,6 @@ def plot_map(x, y, z, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None, zma
     Y = np.linspace(ymin, ymax, n, endpoint=True)
     # grid the data.
     Z = griddata(x, y, z, X, Y, interp='linear')
-
-    # X, Y = np.meshgrid(X, Y)
 
     zmin = np.amin(Z) if zmin is None else zmin
     zmax = np.amax(Z) if zmax is None else zmax
