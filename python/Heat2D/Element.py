@@ -179,14 +179,14 @@ class Quadrilateral(Element):
         Mlocal = Mlocal * self.rho * self.c
         return Mlocal
 
-    def CalcFlocal(self):
+    def CalcFlocal(self, t=0.0):
 
         F = np.zeros(4)
         P = np.zeros(4)
         fValues = np.zeros(4)
 
         for i, node in enumerate(self.nodes):
-            fValues[i] = node.f
+            fValues[i] = node.f(node.coords[0], node.coords[1], t)
             P[i] = node.p
 
         fValues = np.transpose(fValues)

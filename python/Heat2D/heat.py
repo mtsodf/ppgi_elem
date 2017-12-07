@@ -39,7 +39,7 @@ def ConstructCase(entrada, nx, ny, verbose=False):
     sol = []
 
     if entrada == 0:
-        def ffunc(x, y):
+        def ffunc(x, y, t=0.0):
             return 2 * pi * pi * sin(pi * x) * sin(pi * y)
 
         def solfunc(x, y):
@@ -59,7 +59,7 @@ def ConstructCase(entrada, nx, ny, verbose=False):
         contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
 
     elif entrada == 1:
-        def ffunc(x, y):
+        def ffunc(x, y, t=0.0):
             return 2 * pi * pi * sin(pi * x) * sin(pi * y)
 
         def solfunc(x, y):
@@ -85,7 +85,7 @@ def ConstructCase(entrada, nx, ny, verbose=False):
         contorno = [DIRICHLET, NEUMANN, DIRICHLET, DIRICHLET]
 
     elif entrada == 2:
-        def ffunc(x, y):
+        def ffunc(x, y, t=0.0):
             return 2 * pi * pi * sin(pi * x) * sin(pi * y)
 
         def solfunc(x, y):
@@ -105,7 +105,7 @@ def ConstructCase(entrada, nx, ny, verbose=False):
         contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
 
     elif entrada == 3:
-        def ffunc(x, y):
+        def ffunc(x, y, t=0.0):
             return 2 * pi * pi * sin(pi * x) * sin(pi * y)
 
         def solfunc(x, y):
@@ -131,7 +131,7 @@ def ConstructCase(entrada, nx, ny, verbose=False):
         contorno = [DIRICHLET, NEUMANN, DIRICHLET, DIRICHLET]
 
     elif entrada == 4:
-        def ffunc(x, y):
+        def ffunc(x, y, t=0.0):
             return 2 * pi * pi * sin(pi * x) * sin(pi * y)
 
         def solfunc(x, y):
@@ -160,7 +160,7 @@ def ConstructCase(entrada, nx, ny, verbose=False):
         lx = 1.0
         ly = 1.0
 
-        def ffunc(x, y):
+        def ffunc(x, y, t=0.0):
             return 0.0
 
         def solfunc(x, y):
@@ -254,7 +254,7 @@ def ConstructCase(entrada, nx, ny, verbose=False):
                 else:
                     nodes[inode].p = solfunc(x, y)
 
-            nodes[inode].f = ffunc(x, y)
+            nodes[inode].f = ffunc
 
             x += dx
             inode += 1
@@ -384,15 +384,7 @@ def run_case(entrada, nx, ny, verbose=False, plot=False):
     #                   Calculo do Lado Direito
     # ***************************************************************
 
-    F = np.zeros(neq)
-
-    for iel in range(nelem):
-        elem = elements[iel]
-        Flocal = elem.CalcFlocal()
-
-        for i, node in enumerate(elem.nodes):
-            if node.eq is not None:
-                F[node.eq] += Flocal[i]
+    F = CalcF(elements, neq)
 
     if verbose:
         print "Vetor de Carga"
