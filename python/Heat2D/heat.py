@@ -358,12 +358,14 @@ def ConstructCase(entrada, nx, ny, verbose=False):
 
             elem.setBoundary(3, q1, q2)
 
-    return elements, nodes, neq, sol
+    return elements, nodes, neq, solfunc
 
 
 def run_case(entrada, nx, ny, verbose=False, plot=False):
 
-    elements, nodes, neq, sol = ConstructCase(entrada, nx, ny, verbose)
+    elements, nodes, neq, solfunc = ConstructCase(entrada, nx, ny, verbose)
+
+    sol = np.array([solfunc(node.coords[0], node.coords[1]) for node in nodes if node.eq is not None])
 
     nelem = len(elements)
     nnodes = len(nodes)
@@ -415,32 +417,26 @@ def run_case(entrada, nx, ny, verbose=False, plot=False):
     #                Plot das Solucoes
     # ***************************************************************
     if plot:
-        x = []
-        y = []
-        z = []
         z2 = []
         for node in nodes:
-            if node.eq is not None:
-                x.append(node.coords[0])
-                y.append(node.coords[1])
-                z.append(calcsol[node.eq])
-                z2.append(sol[node.eq])
+            z2.append(solfunc(node.coords[0], node.coords[1]))
 
-        x = np.array(x)
-        y = np.array(y)
-        z = np.array(z)
+        z2 = np.array(z2)
 
         fig = plt.figure(figsize=(30, 15))
         ax = fig.add_subplot(121, projection='3d')
 
-        ax.scatter3D(np.ravel(x), np.ravel(y), np.ravel(z))
+        X, Y, Z = GetGridValues(nodes, calcsol)
+
+        ax.scatter3D(X, Y, Z)
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')
         ax.set_title("Solucao Calculada")
 
         ax = fig.add_subplot(122, projection='3d')
-        ax.scatter3D(np.ravel(x), np.ravel(y), np.ravel(z2))
+
+        ax.scatter3D(X, Y, np.ravel(z2))
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')
@@ -448,12 +444,11 @@ def run_case(entrada, nx, ny, verbose=False, plot=False):
 
         plt.show()
 
-        X = np.array([node.coords[0] for node in nodes if node.eq is not None])
-        Y = np.array([node.coords[1] for node in nodes if node.eq is not None])
+
 
         fig = plt.figure(figsize=(16, 9))
         ax = fig.add_subplot(111)
-        plot_map(X, Y, calcsol, ax=ax, fig=fig, zmin=0, zmax=1)
+        plot_map(X, Y, Z, ax=ax, fig=fig, zmin=0, zmax=1)
         plt.savefig('permanent.png')
         plt.close()
 

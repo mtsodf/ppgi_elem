@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def BuildStiffness(elements, neq):
 
     K = np.zeros((neq, neq))
@@ -20,7 +21,6 @@ def BuildStiffness(elements, neq):
     return K
 
 
-
 def BuildM(elements, neq):
     M = np.zeros((neq, neq))
     nelem = len(elements)
@@ -38,3 +38,19 @@ def BuildM(elements, neq):
                     M[globalI, globalJ] += Mlocal[i, j]
 
     return M
+
+
+def GetGridValues(nodes, sol):
+    nnodes = len(nodes)
+    val = np.zeros(nnodes)
+    x = np.zeros(nnodes)
+    y = np.zeros(nnodes)
+
+    for inode, node in enumerate(nodes):
+        x[inode], y[inode] = node.coords
+        if node.eq is None:
+            val[inode] = node.p
+        else:
+            val[inode] = sol[node.eq]
+
+    return x, y, val

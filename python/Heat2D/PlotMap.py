@@ -4,6 +4,39 @@ from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 from scipy import interpolate
 from matplotlib import cm
+from matplotlib.path import Path
+from matplotlib.patches import PathPatch
+from matplotlib.mlab import griddata
+
+
+def plot_elements(elements, sol):
+
+    import matplotlib.pyplot as plt
+
+    vertices = []
+    codes = []
+
+    for element in elements:
+
+        codes = [Path.MOVETO] + [Path.LINETO] * 3 + [Path.CLOSEPOLY]
+        vertices = [(1, 1), (1, 2), (2, 2), (2, 1), (0, 0)]
+
+    codes += [Path.MOVETO] + [Path.LINETO] * 2 + [Path.CLOSEPOLY]
+    vertices += [(4, 4), (5, 5), (5, 4), (0, 0)]
+
+    vertices = np.array(vertices, float)
+    path = Path(vertices, codes)
+
+    pathpatch = PathPatch(path, facecolor='None', edgecolor='green')
+
+    fig, ax = plt.subplots()
+    ax.add_patch(pathpatch)
+    ax.set_title('A compound path')
+
+    ax.dataLim.update_from_data_xy(vertices)
+    ax.autoscale_view()
+
+    plt.show()
 
 
 def plot_surface(x, y, z, ax=None, n=20, out='surface.png'):
@@ -44,23 +77,13 @@ def plot_map(x, y, z, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None, zma
     ymin = np.amin(y) if ymin is None else ymin
     ymax = np.amax(y) if ymax is None else ymax
 
+    # define grid.
     X = np.linspace(xmin, xmax, n, endpoint=True)
     Y = np.linspace(ymin, ymax, n, endpoint=True)
-    X, Y = np.meshgrid(X, Y)
+    # grid the data.
+    Z = griddata(x, y, z, X, Y, interp='linear')
 
-    finter = interpolate.interp2d(x, y, z)
-
-    X = np.linspace(np.amin(X), np.amax(X), n, endpoint=True)
-    Y = np.linspace(np.amin(Y), np.amax(Y), n, endpoint=True)
-    Z = np.zeros(n * n)
-
-    c = 0
-    for j in range(n):
-        for i in range(n):
-            Z[c] = finter(X[i], Y[j])
-            c += 1
-
-    X, Y = np.meshgrid(X, Y)
+    # X, Y = np.meshgrid(X, Y)
 
     zmin = np.amin(Z) if zmin is None else zmin
     zmax = np.amax(Z) if zmax is None else zmax

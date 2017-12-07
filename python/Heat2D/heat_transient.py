@@ -20,7 +20,7 @@ def SolveSedo(M, K, F, d0, nsteps, alpha, dt):
         dpreditor = d0 + np.dot(dt * (1 - alpha), v0)
 
         v0 = np.linalg.solve(M + np.dot(alpha * dt, K) , F - np.dot(K, dpreditor))
-        d0 = dpreditor + np.dot(alpha * dt, v0) 
+        d0 = dpreditor + np.dot(alpha * dt, v0)
 
         sols.append(d0.copy())
 
@@ -139,7 +139,9 @@ def main():
         fig = plt.figure(figsize=(16, 9))
         ax = fig.add_subplot(111)
 
-        plot_map(X, Y, sols[step], ax=ax, fig=fig,
+        X, Y, Z = GetGridValues(nodes, sols[step])
+
+        plot_map(X, Y, Z, ax=ax, fig=fig,
                  zmin=zmin, zmax=zmax + zmax / 1000)
         plt.suptitle("t = %6.4f" % (step * dt))
 
