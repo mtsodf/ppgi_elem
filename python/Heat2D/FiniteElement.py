@@ -20,6 +20,7 @@ def BuildStiffness(elements, neq):
 
     return K
 
+
 def CalcF(elements, neq, t=0.0):
     F = np.zeros(neq)
 
@@ -33,6 +34,7 @@ def CalcF(elements, neq, t=0.0):
             if node.eq is not None:
                 F[node.eq] += Flocal[i]
     return F
+
 
 def BuildM(elements, neq):
     M = np.zeros((neq, neq))
