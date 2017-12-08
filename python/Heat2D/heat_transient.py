@@ -6,6 +6,7 @@ from FiniteElement import *
 from PlotMap import *
 import argparse
 import glob
+import os
 
 
 def SolveSedo(M, K, F, d0, nsteps, alpha, dt):
@@ -14,44 +15,45 @@ def SolveSedo(M, K, F, d0, nsteps, alpha, dt):
     print "v0 ", v0.shape
     print "alpha = ", alpha
 
-    sols = []
+    
+    dpreditor = d0 + np.dot(dt * (1 - alpha), v0)
 
-    for step in range(1, nsteps + 1):
-        dpreditor = d0 + np.dot(dt * (1 - alpha), v0)
+    v0 = np.linalg.solve(M + np.dot(alpha * dt, K) , F - np.dot(K, dpreditor))
+    d0 = dpreditor + np.dot(alpha * dt, v0)
 
-        v0 = np.linalg.solve(M + np.dot(alpha * dt, K) , F - np.dot(K, dpreditor))
-        d0 = dpreditor + np.dot(alpha * dt, v0)
 
-        sols.append(d0.copy())
-
-    return sols
+    return d0.copy()
 
 
 def SolveSedoNewtonImplicit(M, K, F, d0, nsteps, dt):
-    sols = []
 
     K = K * dt
     F = F * dt
 
     dcurrent = d0
-    for step in range(1, nsteps + 1):
-        dprevious = dcurrent
 
-        dcurrent = np.linalg.solve(M + K, F + np.dot(M, dprevious))
+    dprevious = dcurrent
 
-        sols.append(dcurrent.copy())
+    dcurrent = np.linalg.solve(M + K, F + np.dot(M, dprevious))
 
-    return sols
+    return dcurrent
 
 
 def main():
 
+    if not os.path.isdir("out"):
+        os.mkdir("out")
+
+    os.chdir("out")
+    for f in glob.glob("step_*.png"):
+        os.remove(f)
+
     parser = argparse.ArgumentParser(description='Transferencia de Calor 2D')
     parser.add_argument('--entrada', type=int, default=5,
                         help='quantidade de elementos na direção x')
-    parser.add_argument('--nx', type=int, default=40,
+    parser.add_argument('--nx', type=int, default=20,
                         help='quantidade de elementos na direção x')
-    parser.add_argument('--ny', type=int, default=40,
+    parser.add_argument('--ny', type=int, default=20,
                         help='quantidade de elementos na direção y')
     parser.add_argument('--dx', type=float, default=0.1,
                         help='tamanho da célula na direção x')
@@ -80,6 +82,7 @@ def main():
 
     elements, nodes, neq, sol = ConstructCase(entrada, nx, ny, verbose=False)
 
+
     nelem = len(elements)
 
     def initialCondition(x, y):
@@ -88,16 +91,8 @@ def main():
     # ***************************************************************
     #                   Calculo do Lado Direito
     # ***************************************************************
+    F = CalcF(elements, neq, t=0.0)
 
-    F = np.zeros(neq)
-
-    for iel in range(nelem):
-        elem = elements[iel]
-        Flocal = elem.CalcFlocal()
-
-        for i, node in enumerate(elem.nodes):
-            if node.eq is not None:
-                F[node.eq] += Flocal[i]
 
     # ***************************************************************
     #                Construindo Matriz de Rigidez
@@ -120,11 +115,18 @@ def main():
 
     sols = [d0]
 
-    if newton:
-        print "Utilizando metodo de newton"
-        sols.extend(SolveSedoNewtonImplicit(M, K, F, d0, nsteps, dt))
-    else:
-        sols.extend(SolveSedo(M, K, F, d0, nsteps, alpha, dt))
+    t = 0.0
+    for step in range(1, nsteps + 1):
+
+        t += dt
+        F = CalcF(elements, neq, t)
+        if newton:
+            print "Utilizando metodo de newton"
+            sols.append(SolveSedoNewtonImplicit(M, K, F, d0, nsteps, dt))
+        else:
+            sols.append(SolveSedo(M, K, F, d0, nsteps, alpha, dt))
+
+        d0 = sols[-1]
 
     zmax = np.amax(sols[0])
     zmin = np.amin(sols[0])
@@ -146,9 +148,14 @@ def main():
 
         if plot3D:
             plot_surface(X, Y, Z, ax=ax, fig=fig)
+
+
         else:
             plot_map(X, Y, Z, ax=ax, fig=fig,
-                     zmin=zmin, zmax=zmax + zmax / 1000)
+                     zmin=zmin, zmax=zmax + zmax / 1000, nx=nx, ny=ny)
+            plot_elements(elements, ax=ax)
+
+
         plt.suptitle("t = %6.4f" % (step * dt))
 
         plt.savefig('step_%s.png' % str(step).zfill(2))

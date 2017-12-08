@@ -67,7 +67,7 @@ def plot_surface(x, y, z, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None,
 
     plt.savefig(out)
 
-def plot_map(x, y, z, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None, zmax=None, ax=None, fig=None, n=20, out='heatmap.png'):
+def plot_map(x, y, z, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None, zmax=None, ax=None, fig=None, nx=20, ny=20, out=None):
 
     if ax is None:
         fig = plt.figure()
@@ -80,21 +80,37 @@ def plot_map(x, y, z, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None, zma
     ymax = np.amax(y) if ymax is None else ymax
 
     # define grid.
-    X = np.linspace(xmin, xmax, n, endpoint=True)
-    Y = np.linspace(ymin, ymax, n, endpoint=True)
+    X = np.linspace(xmin, xmax, nx, endpoint=True)
+    Y = np.linspace(ymin, ymax, ny, endpoint=True)
     # grid the data.
     Z = griddata(x, y, z, X, Y, interp='linear')
 
     zmin = np.amin(Z) if zmin is None else zmin
     zmax = np.amax(Z) if zmax is None else zmax
 
-    Z = np.reshape(Z, (n, n))
+    Z = np.reshape(Z, (ny, nx))
 
-    im = ax.imshow(Z, interpolation="gaussian", cmap='seismic', origin='lower',
+    im = ax.imshow(Z, interpolation="nearest", cmap='seismic', origin='lower',
                    extent=[xmin, xmax, ymin, ymax], vmin=zmin, vmax=zmax)
 
     fig.colorbar(im)
-    plt.savefig(out)
+    if out is not None:
+        plt.savefig(out)
+
+def plot_elements(elements, ax=None):
+    if ax is None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+
+
+    for element in elements:
+        xs = []
+        ys = []
+        for node in element.nodes:
+            xs.append(node.coords[0])
+            ys.append(node.coords[1])
+        ax.plot(xs, ys, 'ko-', markersize=3)
 
 
 if __name__ == '__main__':
