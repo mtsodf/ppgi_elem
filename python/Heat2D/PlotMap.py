@@ -54,6 +54,8 @@ def plot_surface(x, y, z, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None,
     # define grid.
     X = np.linspace(xmin, xmax, n, endpoint=True)
     Y = np.linspace(ymin, ymax, n, endpoint=True)
+
+    X, Y = np.meshgrid(X, Y)
     # grid the data.
     Z = griddata(x, y, z, X, Y, interp='linear')
 
@@ -62,8 +64,8 @@ def plot_surface(x, y, z, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None,
 
     Z = np.reshape(Z, (n, n))
 
-    # ax.plot_surface(X, Y, Z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
-    ax.scatter3D(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    ax.plot_surface(X, Y, Z, cmap=cm.coolwarm, linewidth=0, antialiased=False, vmin=zmin, vmax=zmax)
+    ax.set_zlim(zmin, zmax)
 
     plt.savefig(out)
 

@@ -9,6 +9,7 @@ import mpl_toolkits.mplot3d.axes3d as p3
 from Element import *
 from FiniteElement import *
 from PlotMap import *
+from math import exp
 
 
 DIRICHLET = 1
@@ -37,6 +38,8 @@ def ConstructCase(entrada, nx, ny, verbose=False):
     solfunc = None
 
     sol = []
+
+    initialCondition = None
 
     if entrada == 0:
         def ffunc(x, y, t=0.0):
@@ -163,7 +166,7 @@ def ConstructCase(entrada, nx, ny, verbose=False):
         def ffunc(x, y, t=0.0):
             return 0.0
 
-        def solfunc(x, y):
+        def solfunc(x, y, t=0.0):
             return 1.0 if y >= 1.0 or x <= 0.0 else 0.0
 
         x = np.linspace(0.0, lx, num=nx, endpoint=True)
@@ -187,42 +190,65 @@ def ConstructCase(entrada, nx, ny, verbose=False):
         nodes.append(Node(4, 0.5, 0.5))
         nodes.append(Node(5, 1.0, 0.5))
 
+        f = lambda x, y, t: 0.0
+
         for node in nodes:
-            node.f = 0.0
+            node.f = f
 
-            nodes[1].eq = 0
-            nodes[4].eq = 1
+        nodes[1].eq = 0
+        nodes[4].eq = 1
 
-            nodes[2].p = 100.0
-            nodes[5].p = 100.0
+        nodes[2].p = 100.0
+        nodes[5].p = 100.0
 
-            nodes[0].p = 0.0
-            nodes[3].p = 0.0
+        nodes[0].p = 0.0
+        nodes[3].p = 0.0
 
-            elems = []
+        elems = []
 
-            elem0 = Quadrilateral(0)
-            elem0.AddNode(nodes[0])
-            elem0.AddNode(nodes[1])
-            elem0.AddNode(nodes[4])
-            elem0.AddNode(nodes[3])
+        elem0 = Quadrilateral(0)
+        elem0.AddNode(nodes[0])
+        elem0.AddNode(nodes[1])
+        elem0.AddNode(nodes[4])
+        elem0.AddNode(nodes[3])
 
-            elems.append(elem0)
+        elems.append(elem0)
 
-            elem1 = Quadrilateral(1)
+        elem1 = Quadrilateral(1)
 
-            elem1.AddNode(nodes[1])
-            elem1.AddNode(nodes[2])
-            elem1.AddNode(nodes[5])
-            elem1.AddNode(nodes[4])
+        elem1.AddNode(nodes[1])
+        elem1.AddNode(nodes[2])
+        elem1.AddNode(nodes[5])
+        elem1.AddNode(nodes[4])
 
-            elems.append(elem1)
+        elems.append(elem1)
 
-            neq = 2
+        neq = 2
 
-            sol = np.array([50.0, 50.0])
+        sol = lambda x, y: 50.0
 
         return elems, nodes, neq, sol
+
+    if entrada == 7:
+        lx = 1.0
+        ly = 1.0
+
+        def ffunc(x, y, t=0.0):
+            return 40.0*(1-x)*x*exp(-t) + 40.0*(1-y)*y*exp(-t) - 20.0*x*(1-x)*y*(1-y)*exp(-t)
+
+        def solfunc(x, y, t=0.0):
+            return 20*x*(1-x)*y*(1-y)*exp(-t)
+
+        x = np.linspace(0.0, lx, num=nx, endpoint=True)
+        y = np.linspace(0.0, ly, num=ny, endpoint=True)
+
+        dx = lx / nx
+        dy = ly / ny
+
+        rho = 1.0
+        c = 1.0
+
+        contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]        
 
     # ***************************************************************
     #                        Criando os nós

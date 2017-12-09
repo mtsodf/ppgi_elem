@@ -11,10 +11,6 @@ import os
 
 def SolveSedo(M, K, F, d0, nsteps, alpha, dt):
     v0 = np.linalg.solve(M, F - np.dot(K, d0))
-
-    print "v0 ", v0.shape
-    print "alpha = ", alpha
-
     
     dpreditor = d0 + np.dot(dt * (1 - alpha), v0)
 
@@ -86,7 +82,7 @@ def main():
     nelem = len(elements)
 
     def initialCondition(x, y):
-        return 0.0
+        return sol(x, y, t=0.0)
 
     # ***************************************************************
     #                   Calculo do Lado Direito
@@ -117,8 +113,10 @@ def main():
 
     t = 0.0
     for step in range(1, nsteps + 1):
+        t = step*dt
+        
+        print "Calcundo time step %d. Tempo: %f." % (step, t)
 
-        t += dt
         F = CalcF(elements, neq, t)
         if newton:
             print "Utilizando metodo de newton"
@@ -131,26 +129,39 @@ def main():
     zmax = np.amax(sols[0])
     zmin = np.amin(sols[0])
 
-    for sol in sols:
-        aux = np.amax(sol)
+    for s in sols:
+        aux = np.amax(s)
         zmax = aux if aux > zmax else zmax
         zmin = aux if aux < zmin else zmin
 
     for step in range(nsteps + 1):
-        fig = plt.figure(figsize=(16, 9))
 
-        if plot3D:
-            ax = fig.add_subplot(111, projection='3d')
-        else:
-            ax = fig.add_subplot(111)
+        print "Plotando time step %d" % step
+
+        fig = plt.figure(figsize=(16, 9))
 
         X, Y, Z = GetGridValues(nodes, sols[step])
 
-        if plot3D:
-            plot_surface(X, Y, Z, ax=ax, fig=fig)
+        t = step*dt
 
+        Zsol = np.zeros(len(Z))
+
+        if plot3D:
+
+            ax = fig.add_subplot(121, projection='3d')
+            ax2 = fig.add_subplot(122, projection='3d')
+
+            plot_surface(X, Y, Z, ax=ax, fig=fig, zmin=zmin, zmax=zmax + zmax / 1000)
+
+            for i in xrange(len(X)):
+                Zsol[i] = sol(X[i], Y[i], t)
+
+            print "Norma da diferenca = ", np.linalg.norm(Z-Zsol)/np.linalg.norm(Zsol)
+
+            plot_surface(X, Y, Zsol, ax=ax2, fig=fig, zmin=zmin, zmax=zmax + zmax / 1000)
 
         else:
+            ax = fig.add_subplot(111)
             plot_map(X, Y, Z, ax=ax, fig=fig,
                      zmin=zmin, zmax=zmax + zmax / 1000, nx=nx, ny=ny)
             plot_elements(elements, ax=ax)

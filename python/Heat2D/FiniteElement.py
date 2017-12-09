@@ -28,7 +28,7 @@ def CalcF(elements, neq, t=0.0):
 
     for iel in range(nelem):
         elem = elements[iel]
-        Flocal = elem.CalcFlocal()
+        Flocal = elem.CalcFlocal(t=t)
 
         for i, node in enumerate(elem.nodes):
             if node.eq is not None:
