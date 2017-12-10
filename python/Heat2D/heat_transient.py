@@ -62,6 +62,9 @@ def main():
     parser.add_argument('--nsteps', type=int, default=40,
                         help='numero de passos de tempo')
 
+    parser.add_argument('--plotdelta', type=int, default=1,
+                        help='graficos que devem ser plotados')
+
     parser.add_argument('-n', '--newton', action="store_true")
     parser.add_argument('-p', '--plot3D', action="store_true")
 
@@ -75,6 +78,7 @@ def main():
     dt = args.dt
     nsteps = args.nsteps
     plot3D = args.plot3D
+    plotdelta = args.plotdelta  
 
     elements, nodes, neq, sol = ConstructCase(entrada, nx, ny, verbose=False)
 
@@ -136,49 +140,56 @@ def main():
 
     for step in range(nsteps + 1):
 
-        print "Plotando time step %d" % step
+        if step%plotdelta == 0:
 
-        fig = plt.figure(figsize=(16, 9))
+            print "Plotando time step %d" % step
 
-        X, Y, Z = GetGridValues(nodes, sols[step])
+            fig = plt.figure(figsize=(16, 9))
 
-        t = step*dt
+            X, Y, Z = GetGridValues(nodes, sols[step])
 
-        Zsol = np.zeros(len(Z))
+            t = step*dt
 
-        if plot3D:
+            Zsol = np.zeros(len(Z))
 
-            ax = fig.add_subplot(121, projection='3d')
-            ax2 = fig.add_subplot(122, projection='3d')
+            if plot3D:
 
-            plot_surface(X, Y, Z, ax=ax, fig=fig, zmin=zmin, zmax=zmax + zmax / 1000)
+                ax = fig.add_subplot(121, projection='3d')
+                ax2 = fig.add_subplot(122, projection='3d')
 
-            for i in xrange(len(X)):
-                Zsol[i] = sol(X[i], Y[i], t)
+                plot_surface(X, Y, Z, ax=ax, fig=fig, zmin=zmin, zmax=zmax + zmax / 1000)
 
-            print "Norma da diferenca = ", np.linalg.norm(Z-Zsol)/np.linalg.norm(Zsol)
+                for i in xrange(len(X)):
+                    Zsol[i] = sol(X[i], Y[i], t)
 
-            plot_surface(X, Y, Zsol, ax=ax2, fig=fig, zmin=zmin, zmax=zmax + zmax / 1000)
+                print "Norma da diferenca = ", np.linalg.norm(Z-Zsol)/np.linalg.norm(Zsol)
 
-        else:
-            ax = fig.add_subplot(111)
-            plot_map(X, Y, Z, ax=ax, fig=fig,
-                     zmin=zmin, zmax=zmax + zmax / 1000, nx=nx, ny=ny)
-            plot_elements(elements, ax=ax)
+                plot_surface(X, Y, Zsol, ax=ax2, fig=fig, zmin=zmin, zmax=zmax + zmax / 1000)
+
+            else:
+                ax = fig.add_subplot(111)
+                plot_map(X, Y, Z, ax=ax, fig=fig,
+                         zmin=zmin, zmax=zmax + zmax / 1000, nx=nx, ny=ny)
+                plot_elements(elements, ax=ax)
 
 
-        plt.suptitle("t = %6.4f" % (step * dt))
+            plt.suptitle("t = %6.4f" % (step * dt))
 
-        plt.savefig('step_%s.png' % str(step).zfill(2))
-        plt.close()
+            plt.savefig('step_%s.png' % str(step).zfill(4))
+            plt.close()
 
     import imageio
-    with imageio.get_writer('movie.gif', mode='I') as writer:
-        filenames = glob.glob("step_*.png")
-        filenames.sort()
-        for filename in filenames:
-            image = imageio.imread(filename)
-            writer.append_data(image)
+    images = []
+    
+    
+
+    filenames = glob.glob("step_*.png")
+    filenames.sort()
+    for filename in filenames:
+        images.append(imageio.imread(filename))
+    
+    imageio.mimsave('movie.gif', images, fps=2)
+
 
 
 if __name__ == '__main__':
