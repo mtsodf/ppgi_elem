@@ -99,13 +99,13 @@ class Quadrilateral(Element):
 
         for e, n, w in intPoints:
 
-            D = FormsDeriv(e, n)
+            D = self.FormsDeriv(e, n)
 
             J = np.dot(D, coord)
 
             detJ = np.linalg.det(J)
 
-            v = VecFuncForm(e, n)
+            v = self.VecFuncForm(e, n)
             Mlocal += w * (np.outer(v, v)) * detJ
 
         Mlocal = Mlocal * self.rho * self.c
