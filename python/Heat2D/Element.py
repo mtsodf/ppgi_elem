@@ -5,78 +5,6 @@ w = sqrt(3) / 3
 intPoints = [[-w, -w, 1.0], [w, -w, 1.0], [w, w, 1.0], [-w, w, 1.0]]
 
 
-def FuncForm1d(e, vert):
-    if vert == 0:
-        return (1.0 - e) / 2
-    if vert == 1:
-        return (1.0 + e) / 2
-
-    return None
-
-
-def VecFuncForm1d(e):
-    return np.array([FuncForm1d(e, 0), FuncForm1d(e, 1)])
-
-
-def FuncForm(e, n, vert):
-
-    if vert == 0:
-        return (1.0 - e) * (1.0 - n) / 4.0
-    elif vert == 1.0:
-        return (1.0 + e) * (1.0 - n) / 4.0
-    elif vert == 2:
-        return (1.0 + e) * (1.0 + n) / 4.0
-    elif vert == 3:
-        return (1.0 - e) * (1.0 + n) / 4.0
-
-    return float('nan')
-
-
-def VecFuncForm(e, n):
-    v = np.zeros((4, 1))
-
-    for i in range(4):
-        v[i] = FuncForm(e, n, i)
-
-    return v
-
-
-def dFuncForm(e, n, vert, var):
-
-    if vert == 0:
-        if var == 0:
-            return -0.25 * (1.0 - n)
-        if var == 1:
-            return -0.25 * (1.0 - e)
-
-    if vert == 1:
-        if var == 0:
-            return 0.25 * (1.0 - n)
-        if var == 1:
-            return -0.25 * (1.0 + e)
-
-    if vert == 2:
-        if var == 0:
-            return 0.25 * (1.0 + n)
-        if var == 1:
-            return 0.25 * (1.0 + e)
-
-    if vert == 3:
-        if var == 0:
-            return -0.25 * (1.0 + n)
-        if var == 1:
-            return 0.25 * (1.0 - e)
-
-    return float('nan')
-
-
-def FormsDeriv(e, n):
-    r = np.zeros((2, 4))
-    for var in range(2):
-        for f in range(4):
-            r[var, f] = dFuncForm(e, n, f, var)
-
-    return r
 
 
 class Element(object):
@@ -110,11 +38,14 @@ class Element(object):
 
         return coord
 
+
     def AddNode(self, node):
         self.nodes.append(node)
 
+
     def CalcMLocal(self):
         pass
+
 
     def QtdNodes(self):
         return len(self.nodes)
@@ -131,6 +62,7 @@ class Element(object):
         return val / self.QtdNodes()
 
 
+
 class Quadrilateral(Element):
 
     def __init__(self, iel, Q=None, rho=None, c=None):
@@ -144,7 +76,7 @@ class Quadrilateral(Element):
 
         for e, n, w in intPoints:
 
-            D = FormsDeriv(e, n)
+            D = self.FormsDeriv(e, n)
 
             J = np.dot(D, coord)
 
@@ -193,9 +125,9 @@ class Quadrilateral(Element):
         coord = self.GetCoords()
 
         for e, n, w in intPoints:
-            phi = VecFuncForm(e, n)
+            phi = self.VecFuncForm(e, n)
 
-            D = FormsDeriv(e, n)
+            D = self.FormsDeriv(e, n)
             J = np.dot(D, coord)
             detJ = np.linalg.det(J)
 
@@ -217,7 +149,7 @@ class Quadrilateral(Element):
 
                 detJ = np.linalg.norm(node1.coords - node2.coords)
 
-                phi = VecFuncForm1d(e)
+                phi = self.VecFuncForm1d(e)
 
                 Qf += np.dot(phi, np.dot(Q, phi)) * detJ / 2
 
@@ -241,6 +173,79 @@ class Quadrilateral(Element):
         inode2 = (boundary + 1) % self.qtdNodes
 
         return [self.nodes[inode1], self.nodes[inode2]]
+
+
+    def dFuncForm(self, e, n, vert, var):
+
+        if vert == 0:
+            if var == 0:
+                return -0.25 * (1.0 - n)
+            if var == 1:
+                return -0.25 * (1.0 - e)
+
+        if vert == 1:
+            if var == 0:
+                return 0.25 * (1.0 - n)
+            if var == 1:
+                return -0.25 * (1.0 + e)
+
+        if vert == 2:
+            if var == 0:
+                return 0.25 * (1.0 + n)
+            if var == 1:
+                return 0.25 * (1.0 + e)
+
+        if vert == 3:
+            if var == 0:
+                return -0.25 * (1.0 + n)
+            if var == 1:
+                return 0.25 * (1.0 - e)
+
+        return float('nan')
+
+
+    def FuncForm1d(self, e, vert):
+        if vert == 0:
+            return (1.0 - e) / 2
+        if vert == 1:
+            return (1.0 + e) / 2
+
+        return None
+
+
+    def VecFuncForm1d(self, e):
+        return np.array([self.FuncForm1d(e, 0), self.FuncForm1d(e, 1)])
+
+
+    def FuncForm(self, e, n, vert):
+
+        if vert == 0:
+            return (1.0 - e) * (1.0 - n) / 4.0
+        elif vert == 1.0:
+            return (1.0 + e) * (1.0 - n) / 4.0
+        elif vert == 2:
+            return (1.0 + e) * (1.0 + n) / 4.0
+        elif vert == 3:
+            return (1.0 - e) * (1.0 + n) / 4.0
+
+        return float('nan')
+
+
+    def VecFuncForm(self, e, n):
+        v = np.zeros((4, 1))
+
+        for i in range(4):
+            v[i] = self.FuncForm(e, n, i)
+
+        return v
+
+
+    def FormsDeriv(self, e, n):
+        r = np.zeros((2, 4))
+        for var in range(2):
+            for f in range(4):
+                r[var, f] = self.dFuncForm(e, n, f, var)
+        return r
 
 
 class Node(object):
