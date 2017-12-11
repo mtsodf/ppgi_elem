@@ -7,16 +7,16 @@ from PlotMap import *
 import argparse
 import glob
 import os
+from numpy.linalg import norm
 
 
 def SolveSedo(M, K, F, d0, nsteps, alpha, dt):
     v0 = np.linalg.solve(M, F - np.dot(K, d0))
-    
+
     dpreditor = d0 + np.dot(dt * (1 - alpha), v0)
 
-    v0 = np.linalg.solve(M + np.dot(alpha * dt, K) , F - np.dot(K, dpreditor))
+    v0 = np.linalg.solve(M + np.dot(alpha * dt, K), F - np.dot(K, dpreditor))
     d0 = dpreditor + np.dot(alpha * dt, v0)
-
 
     return d0.copy()
 
@@ -35,53 +35,8 @@ def SolveSedoNewtonImplicit(M, K, F, d0, nsteps, dt):
     return dcurrent
 
 
-def main():
-
-    if not os.path.isdir("out"):
-        os.mkdir("out")
-
-    os.chdir("out")
-    for f in glob.glob("step_*.png"):
-        os.remove(f)
-
-    parser = argparse.ArgumentParser(description='Transferencia de Calor 2D')
-    parser.add_argument('--entrada', type=int, default=5,
-                        help='quantidade de elementos na direção x')
-    parser.add_argument('--nx', type=int, default=20,
-                        help='quantidade de elementos na direção x')
-    parser.add_argument('--ny', type=int, default=20,
-                        help='quantidade de elementos na direção y')
-    parser.add_argument('--dx', type=float, default=0.1,
-                        help='tamanho da célula na direção x')
-    parser.add_argument('--dy', type=float, default=0.1,
-                        help='tamanho da célula na direção y')
-    parser.add_argument('--alpha', type=float, default=0.5,
-                        help='alpha para método de solução')
-    parser.add_argument('--dt', type=float, default=0.002,
-                        help='dt para método de solução')
-    parser.add_argument('--nsteps', type=int, default=40,
-                        help='numero de passos de tempo')
-
-    parser.add_argument('--plotdelta', type=int, default=1,
-                        help='graficos que devem ser plotados')
-
-    parser.add_argument('-n', '--newton', action="store_true")
-    parser.add_argument('-p', '--plot3D', action="store_true")
-
-    args = parser.parse_args()
-
-    nx = args.nx
-    ny = args.ny
-    entrada = args.entrada
-    newton = args.newton
-    alpha = args.alpha
-    dt = args.dt
-    nsteps = args.nsteps
-    plot3D = args.plot3D
-    plotdelta = args.plotdelta  
-
+def run_transient_case(entrada, nx, ny, dt, alpha, newton, nsteps, verbose=False, plot3D=False, plotdelta=1, gif=True):
     elements, nodes, neq, sol = ConstructCase(entrada, nx, ny, verbose=False)
-
 
     nelem = len(elements)
 
@@ -92,7 +47,6 @@ def main():
     #                   Calculo do Lado Direito
     # ***************************************************************
     F = CalcF(elements, neq, t=0.0)
-
 
     # ***************************************************************
     #                Construindo Matriz de Rigidez
@@ -117,8 +71,8 @@ def main():
 
     t = 0.0
     for step in range(1, nsteps + 1):
-        t = step*dt
-        
+        t = step * dt
+
         print "Calcundo time step %d. Tempo: %f." % (step, t)
 
         F = CalcF(elements, neq, t)
@@ -138,9 +92,11 @@ def main():
         zmax = aux if aux > zmax else zmax
         zmin = aux if aux < zmin else zmin
 
+    residues = []
+
     for step in range(nsteps + 1):
 
-        if step%plotdelta == 0:
+        if step % plotdelta == 0:
 
             print "Plotando time step %d" % step
 
@@ -148,23 +104,29 @@ def main():
 
             X, Y, Z = GetGridValues(nodes, sols[step])
 
-            t = step*dt
+            t = step * dt
 
             Zsol = np.zeros(len(Z))
+
+            solarray = np.array([sol(node.coords[0], node.coords[1], t=t)
+                                 for node in nodes if node.eq is not None])
+            residues.append(norm(sols[step] - solarray) / norm(solarray))
+
+            print "Norma da diferenca = ", residues[-1]
 
             if plot3D:
 
                 ax = fig.add_subplot(121, projection='3d')
                 ax2 = fig.add_subplot(122, projection='3d')
 
-                plot_surface(X, Y, Z, ax=ax, fig=fig, zmin=zmin, zmax=zmax + zmax / 1000)
+                plot_surface(X, Y, Z, ax=ax, fig=fig,
+                             zmin=zmin, zmax=zmax + zmax / 1000)
 
                 for i in xrange(len(X)):
                     Zsol[i] = sol(X[i], Y[i], t)
 
-                print "Norma da diferenca = ", np.linalg.norm(Z-Zsol)/np.linalg.norm(Zsol)
-
-                plot_surface(X, Y, Zsol, ax=ax2, fig=fig, zmin=zmin, zmax=zmax + zmax / 1000)
+                plot_surface(X, Y, Zsol, ax=ax2, fig=fig,
+                             zmin=zmin, zmax=zmax + zmax / 1000)
 
             else:
                 ax = fig.add_subplot(111)
@@ -172,24 +134,68 @@ def main():
                          zmin=zmin, zmax=zmax + zmax / 1000, nx=nx, ny=ny)
                 plot_elements(elements, ax=ax)
 
-
             plt.suptitle("t = %6.4f" % (step * dt))
 
             plt.savefig('step_%s.png' % str(step).zfill(4))
             plt.close()
 
-    import imageio
-    images = []
-    
-    
+    if gif:
+        import imageio
+        images = []
 
-    filenames = glob.glob("step_*.png")
-    filenames.sort()
-    for filename in filenames:
-        images.append(imageio.imread(filename))
-    
-    imageio.mimsave('movie.gif', images, fps=2)
+        filenames = glob.glob("step_*.png")
+        filenames.sort()
+        for filename in filenames:
+            images.append(imageio.imread(filename))
 
+        imageio.mimsave('movie.gif', images, fps=2)
+
+    return residues
+
+
+def main():
+
+    if not os.path.isdir("out"):
+        os.mkdir("out")
+
+    os.chdir("out")
+    for f in glob.glob("step_*.png"):
+        os.remove(f)
+
+    parser = argparse.ArgumentParser(description='Transferencia de Calor 2D')
+    parser.add_argument('--entrada', type=int, default=5,
+                        help='quantidade de elementos na direção x')
+    parser.add_argument('--nx', type=int, default=20,
+                        help='quantidade de elementos na direção x')
+    parser.add_argument('--ny', type=int, default=20,
+                        help='quantidade de elementos na direção y')
+    parser.add_argument('--alpha', type=float, default=0.5,
+                        help='alpha para método de solução')
+    parser.add_argument('--dt', type=float, default=0.002,
+                        help='dt para método de solução')
+    parser.add_argument('--nsteps', type=int, default=40,
+                        help='numero de passos de tempo')
+
+    parser.add_argument('--plotdelta', type=int, default=1,
+                        help='graficos que devem ser plotados')
+
+    parser.add_argument('-n', '--newton', action="store_true")
+    parser.add_argument('-p', '--plot3D', action="store_true")
+
+    args = parser.parse_args()
+
+    nx = args.nx
+    ny = args.ny
+    entrada = args.entrada
+    newton = args.newton
+    alpha = args.alpha
+    dt = args.dt
+    nsteps = args.nsteps
+    plot3D = args.plot3D
+    plotdelta = args.plotdelta
+
+    run_transient_case(entrada, nx, ny, dt, alpha, newton,
+                       nsteps, plot3D=plot3D, plotdelta=plotdelta)
 
 
 if __name__ == '__main__':

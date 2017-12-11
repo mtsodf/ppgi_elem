@@ -1,4 +1,5 @@
 from heat import *
+from heat_transient import *
 import unittest
 
 
@@ -30,6 +31,15 @@ class TestHeat(unittest.TestCase):
         diff = run_case(4, 90, 90)
 
         self.assertLess(diff, 1e-3)
+
+    def test_heat_trasient(self):
+        residue = run_transient_case(7, 40, 40, 0.1, 1.0, False, 3, plot3D=True, gif=False)
+
+        for r in residue:
+            self.assertLess(r, 3e-3)
+
+
+
 
 
 if __name__ == '__main__':

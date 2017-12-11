@@ -248,7 +248,7 @@ def ConstructCase(entrada, nx, ny, verbose=False):
         rho = 1.0
         c = 1.0
 
-        contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]        
+        contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
 
     # ***************************************************************
     #                        Criando os nós
