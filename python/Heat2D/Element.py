@@ -28,49 +28,7 @@ class Element(object):
         self.qtdNodes = None
 
     def CalcKlocal(self):
-        pass
-
-    def GetCoords(self):
-        coord = np.zeros((4, 2))
-
-        for i in range(4):
-            coord[i, :] = self.nodes[i].coords
-
-        return coord
-
-
-    def AddNode(self, node):
-        self.nodes.append(node)
-
-
-    def CalcMLocal(self):
-        pass
-
-
-    def QtdNodes(self):
-        return len(self.nodes)
-
-    def GetValue(self, sol):
-        val = 0.0
-
-        for node in self.nodes:
-            if node.eq is None:
-                val += node.p
-            else:
-                val += sol[node.eq]
-
-        return val / self.QtdNodes()
-
-
-
-class Quadrilateral(Element):
-
-    def __init__(self, iel, Q=None, rho=None, c=None):
-        Element.__init__(self, iel, Q, rho, c)
-        self.qtdNodes = 4
-
-    def CalcKlocal(self):
-        Klocal = np.zeros((4, 4))
+        Klocal = np.zeros((self.QtdNodes(), self.QtdNodes()))
 
         coord = self.GetCoords()
 
@@ -92,30 +50,26 @@ class Quadrilateral(Element):
 
         return Klocal
 
+    def GetCoords(self):
+        coord = np.zeros((self.QtdNodes(), 2))
+
+        for i in range(self.QtdNodes()):
+            coord[i, :] = self.nodes[i].coords
+
+        return coord
+
+    def AddNode(self, node):
+        self.nodes.append(node)
+
     def CalcMLocal(self):
-        Mlocal = np.zeros((self.qtdNodes, self.qtdNodes))
+        pass
 
-        coord = self.GetCoords()
-
-        for e, n, w in intPoints:
-
-            D = self.FormsDeriv(e, n)
-
-            J = np.dot(D, coord)
-
-            detJ = np.linalg.det(J)
-
-            v = self.VecFuncForm(e, n)
-            Mlocal += w * (np.outer(v, v)) * detJ
-
-        Mlocal = Mlocal * self.rho * self.c
-        return Mlocal
 
     def CalcFlocal(self, t=0.0):
 
-        F = np.zeros(4)
-        P = np.zeros(4)
-        fValues = np.zeros(4)
+        F = np.zeros(self.QtdNodes())
+        P = np.zeros(self.QtdNodes())
+        fValues = np.zeros(self.QtdNodes())
 
         for i, node in enumerate(self.nodes):
             fValues[i] = node.f(node.coords[0], node.coords[1], t)
@@ -157,6 +111,64 @@ class Quadrilateral(Element):
             F[inode2] -= Qf[1]
 
         return F
+
+
+    def QtdNodes(self):
+        return len(self.nodes)
+
+
+    def GetValue(self, sol):
+        val = 0.0
+
+        for node in self.nodes:
+            if node.eq is None:
+                val += node.p
+            else:
+                val += sol[node.eq]
+
+        return val / self.QtdNodes()
+
+
+    def VecFuncForm(self, e, n):
+        v = np.zeros((self.QtdNodes(), 1))
+
+        for i in range(self.QtdNodes()):
+            v[i] = self.FuncForm(e, n, i)
+
+        return v
+
+    def FormsDeriv(self, e, n):
+        r = np.zeros((2, self.QtdNodes()))
+        for var in range(2):
+            for f in range(self.QtdNodes()):
+                r[var, f] = self.dFuncForm(e, n, f, var)
+        return r
+
+
+class Quadrilateral(Element):
+
+    def __init__(self, iel, Q=None, rho=None, c=None):
+        Element.__init__(self, iel, Q, rho, c)
+        self.qtdNodes = 4
+
+    def CalcMLocal(self):
+        Mlocal = np.zeros((self.qtdNodes, self.qtdNodes))
+
+        coord = self.GetCoords()
+
+        for e, n, w in intPoints:
+
+            D = self.FormsDeriv(e, n)
+
+            J = np.dot(D, coord)
+
+            detJ = np.linalg.det(J)
+
+            v = self.VecFuncForm(e, n)
+            Mlocal += w * (np.outer(v, v)) * detJ
+
+        Mlocal = Mlocal * self.rho * self.c
+        return Mlocal
 
     def setBoundary(self, boundary, q1, q2):
 
@@ -229,23 +241,6 @@ class Quadrilateral(Element):
             return (1.0 - e) * (1.0 + n) / 4.0
 
         return float('nan')
-
-
-    def VecFuncForm(self, e, n):
-        v = np.zeros((4, 1))
-
-        for i in range(4):
-            v[i] = self.FuncForm(e, n, i)
-
-        return v
-
-
-    def FormsDeriv(self, e, n):
-        r = np.zeros((2, 4))
-        for var in range(2):
-            for f in range(4):
-                r[var, f] = self.dFuncForm(e, n, f, var)
-        return r
 
 
 class Node(object):
