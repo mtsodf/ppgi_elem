@@ -94,6 +94,8 @@ def run_transient_case(entrada, nx, ny, dt, alpha, newton, nsteps, verbose=False
 
     residues = []
 
+    solarray = np.zeros(neq)
+
     for step in range(nsteps + 1):
 
         if step % plotdelta == 0:
@@ -108,8 +110,11 @@ def run_transient_case(entrada, nx, ny, dt, alpha, newton, nsteps, verbose=False
 
             Zsol = np.zeros(len(Z))
 
-            solarray = np.array([sol(node.coords[0], node.coords[1], t=t)
-                                 for node in nodes if node.eq is not None])
+
+            for node in nodes:
+                if node.eq is not None:
+                    solarray[node.eq] = sol(node.coords[0], node.coords[1], t=t)
+
             residues.append(norm(sols[step] - solarray) / norm(solarray))
 
             print "Norma da diferenca = ", residues[-1]
