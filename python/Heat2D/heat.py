@@ -10,6 +10,7 @@ from Element import *
 from FiniteElement import *
 from PlotMap import *
 from math import exp
+from random import random
 
 
 DIRICHLET = 1
@@ -29,7 +30,7 @@ def getBoundary(i, j, nx, ny):
     return None
 
 
-def ConstructCase(entrada, nx, ny, verbose=False):
+def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False):
 
     rho = None
     c = None
@@ -308,6 +309,21 @@ def ConstructCase(entrada, nx, ny, verbose=False):
 
             iel += 1
 
+    elements_old = elements
+
+    elements = []
+
+    for elem in elements_old:
+
+        if random() < triangles:
+            tri0, tri1 = elem.ToTriangles()
+
+            elements.append(tri0)
+            elements.append(tri1)
+
+        else:
+            elements.append(elem)
+
     neq = eqCurrent
 
     # ***************************************************************
@@ -387,9 +403,9 @@ def ConstructCase(entrada, nx, ny, verbose=False):
     return elements, nodes, neq, solfunc
 
 
-def run_case(entrada, nx, ny, verbose=False, plot=False):
+def run_case(entrada, nx, ny, triangles=0.0, verbose=False, plot=False):
 
-    elements, nodes, neq, solfunc = ConstructCase(entrada, nx, ny, verbose)
+    elements, nodes, neq, solfunc = ConstructCase(entrada, nx, ny, triangles, verbose)
 
     sol = np.array([solfunc(node.coords[0], node.coords[1]) for node in nodes if node.eq is not None])
 
@@ -467,6 +483,7 @@ def run_case(entrada, nx, ny, verbose=False, plot=False):
         fig = plt.figure(figsize=(16, 9))
         ax = fig.add_subplot(111)
         plot_map(X, Y, Z, ax=ax, fig=fig, zmin=np.amin(z2), zmax=np.amax(z2))
+        plot_elements(elements, ax)
         plt.savefig('permanent.png')
         plt.close()
 
@@ -482,10 +499,9 @@ def main():
                         help='quantidade de elementos na direção x')
     parser.add_argument('--ny', type=int, default=40,
                         help='quantidade de elementos na direção y')
-    parser.add_argument('--dx', type=float, default=0.1,
-                        help='tamanho da célula na direção x')
-    parser.add_argument('--dy', type=float, default=0.1,
-                        help='tamanho da célula na direção y')
+    parser.add_argument('--triangles', type=float, default=0.0,
+                        help='porcentagem aproximada de triangulos da malha')
+
     parser.add_argument('-v', '--verbose', action="store_true")
     parser.add_argument('-p', '--plot', action="store_true")
     args = parser.parse_args()
@@ -493,10 +509,11 @@ def main():
     nx = args.nx
     ny = args.ny
     entrada = args.entrada
+    triangles = args.triangles
     verbose = args.verbose
     plot = args.plot
 
-    residue = run_case(entrada, nx, ny, verbose, plot)
+    residue = run_case(entrada, nx, ny, triangles, verbose, plot)
 
     print "Residuo calculado %f" % residue
 

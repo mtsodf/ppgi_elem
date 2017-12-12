@@ -5,8 +5,6 @@ w = sqrt(3) / 3
 intPoints = [[-w, -w, 1.0], [w, -w, 1.0], [w, w, 1.0], [-w, w, 1.0]]
 
 
-
-
 class Element(object):
     """docstring for Element"""
 
@@ -62,8 +60,23 @@ class Element(object):
         self.nodes.append(node)
 
     def CalcMLocal(self):
-        pass
+        Mlocal = np.zeros((self.qtdNodes, self.qtdNodes))
 
+        coord = self.GetCoords()
+
+        for e, n, w in intPoints:
+
+            D = self.FormsDeriv(e, n)
+
+            J = np.dot(D, coord)
+
+            detJ = np.linalg.det(J)
+
+            v = self.VecFuncForm(e, n)
+            Mlocal += w * (np.outer(v, v)) * detJ
+
+        Mlocal = Mlocal * self.rho * self.c
+        return Mlocal
 
     def CalcFlocal(self, t=0.0):
 
@@ -151,25 +164,6 @@ class Quadrilateral(Element):
         Element.__init__(self, iel, Q, rho, c)
         self.qtdNodes = 4
 
-    def CalcMLocal(self):
-        Mlocal = np.zeros((self.qtdNodes, self.qtdNodes))
-
-        coord = self.GetCoords()
-
-        for e, n, w in intPoints:
-
-            D = self.FormsDeriv(e, n)
-
-            J = np.dot(D, coord)
-
-            detJ = np.linalg.det(J)
-
-            v = self.VecFuncForm(e, n)
-            Mlocal += w * (np.outer(v, v)) * detJ
-
-        Mlocal = Mlocal * self.rho * self.c
-        return Mlocal
-
     def setBoundary(self, boundary, q1, q2):
 
         self.neumannBoundary.append(boundary)
@@ -241,6 +235,64 @@ class Quadrilateral(Element):
             return (1.0 - e) * (1.0 + n) / 4.0
 
         return float('nan')
+
+
+    def ToTriangles(self):
+
+        tri0 = Triangle(None, self.Q, self.rho, self.c)
+
+        tri0.AddNode(self.nodes[0])
+        tri0.AddNode(self.nodes[1])
+        tri0.AddNode(self.nodes[2])
+
+        tri1 = Triangle(None, self.Q, self.rho, self.c)
+
+        tri1.AddNode(self.nodes[0])
+        tri1.AddNode(self.nodes[2])
+        tri1.AddNode(self.nodes[3])
+
+        return tri0, tri1
+
+class Triangle(Element):
+
+    def __init__(self, iel, Q=None, rho=None, c=None):
+        Element.__init__(self, iel, Q, rho, c)
+        self.qtdNodes = 3
+        self.quadrilateral = Quadrilateral(None, Q, rho, c)
+
+
+    def AddNode(self, node):
+
+        Element.AddNode(self, node)
+
+        self.quadrilateral.AddNode(node)
+
+        if self.QtdNodes() == 3:
+            self.quadrilateral.AddNode(node)
+
+
+    def FuncForm(self, e, n, vert):
+
+        if vert == 0 or vert == 1:
+            return self.quadrilateral.FuncForm(e, n, vert)
+
+        elif vert == 2:
+            return self.quadrilateral.FuncForm(e, n, 2) + self.quadrilateral.FuncForm(e, n, 3)
+
+        return float('nan')
+
+
+    def dFuncForm(self, e, n, vert, var):
+
+        if vert == 0 or vert == 1:
+
+            return self.quadrilateral.dFuncForm(e, n, vert, var)
+
+        if vert == 2:
+            return self.quadrilateral.dFuncForm(e, n, 2, var) + self.quadrilateral.dFuncForm(e, n, 3, var)
+
+        return float('nan')
+
 
 
 class Node(object):

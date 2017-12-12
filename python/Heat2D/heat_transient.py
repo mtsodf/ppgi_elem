@@ -35,7 +35,7 @@ def SolveSedoNewtonImplicit(M, K, F, d0, nsteps, dt):
     return dcurrent
 
 
-def run_transient_case(entrada, nx, ny, dt, alpha, newton, nsteps, verbose=False, plot3D=False, plotdelta=1, gif=True):
+def run_transient_case(entrada, nx, ny, dt, alpha, newton, triangles, nsteps, verbose=False, plot3D=False, plotdelta=1, gif=True):
     elements, nodes, neq, sol = ConstructCase(entrada, nx, ny, verbose=False)
 
     nelem = len(elements)
@@ -53,10 +53,14 @@ def run_transient_case(entrada, nx, ny, dt, alpha, newton, nsteps, verbose=False
     # ***************************************************************
 
     K = BuildStiffness(elements, neq)
-    print "Tamanho K -> ", K.shape
+
+    if verbose:
+        print "Tamanho K -> ", K.shape
 
     M = BuildM(elements, neq)
-    print "Tamanho M -> ", M.shape
+
+    if verbose:
+        print "Tamanho M -> ", M.shape
 
     d0 = np.zeros(neq)
 
@@ -73,11 +77,13 @@ def run_transient_case(entrada, nx, ny, dt, alpha, newton, nsteps, verbose=False
     for step in range(1, nsteps + 1):
         t = step * dt
 
-        print "Calcundo time step %d. Tempo: %f." % (step, t)
+        if verbose:
+            print "Calcundo time step %d. Tempo: %f." % (step, t)
 
         F = CalcF(elements, neq, t)
         if newton:
-            print "Utilizando metodo de newton"
+            if verbose:
+                print "Utilizando metodo de newton"
             sols.append(SolveSedoNewtonImplicit(M, K, F, d0, nsteps, dt))
         else:
             sols.append(SolveSedo(M, K, F, d0, nsteps, alpha, dt))
@@ -100,7 +106,8 @@ def run_transient_case(entrada, nx, ny, dt, alpha, newton, nsteps, verbose=False
 
         if step % plotdelta == 0:
 
-            print "Plotando time step %d" % step
+            if verbose:
+                print "Plotando time step %d" % step
 
             fig = plt.figure(figsize=(16, 9))
 
@@ -117,7 +124,8 @@ def run_transient_case(entrada, nx, ny, dt, alpha, newton, nsteps, verbose=False
 
             residues.append(norm(sols[step] - solarray) / norm(solarray))
 
-            print "Norma da diferenca = ", residues[-1]
+            if verbose:
+                print "Norma da diferenca = ", residues[-1]
 
             if plot3D:
 
@@ -181,6 +189,9 @@ def main():
     parser.add_argument('--nsteps', type=int, default=40,
                         help='numero de passos de tempo')
 
+    parser.add_argument('--triangles', type=float, default=0.0,
+                        help='porcentagem aproximada de triangulos da malha')
+
     parser.add_argument('--plotdelta', type=int, default=1,
                         help='graficos que devem ser plotados')
 
@@ -199,8 +210,8 @@ def main():
     plot3D = args.plot3D
     plotdelta = args.plotdelta
 
-    run_transient_case(entrada, nx, ny, dt, alpha, newton,
-                       nsteps, plot3D=plot3D, plotdelta=plotdelta)
+    run_transient_case(entrada, nx, ny, dt, alpha, newton, triangles,
+                       nsteps, plot3D=plot3D, plotdelta=plotdelta, verbose=True)
 
 
 if __name__ == '__main__':

@@ -100,11 +100,10 @@ def plot_map(x, y, z, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None, zma
         plt.savefig(out)
 
 def plot_elements(elements, ax=None):
+
     if ax is None:
         fig = plt.figure()
         ax = fig.add_subplot(111)
-
-
 
     for element in elements:
         xs = []
@@ -112,6 +111,7 @@ def plot_elements(elements, ax=None):
         for node in element.nodes:
             xs.append(node.coords[0])
             ys.append(node.coords[1])
+
         ax.plot(xs, ys, 'ko-', markersize=3)
 
 
