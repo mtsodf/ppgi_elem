@@ -209,6 +209,7 @@ def main():
     nsteps = args.nsteps
     plot3D = args.plot3D
     plotdelta = args.plotdelta
+    triangles = args.triangles
 
     run_transient_case(entrada, nx, ny, dt, alpha, newton, triangles,
                        nsteps, plot3D=plot3D, plotdelta=plotdelta, verbose=True)
