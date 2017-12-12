@@ -251,6 +251,27 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False):
 
         contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
 
+    if entrada == 7:
+        lx = 1.0
+        ly = 1.0
+
+        def ffunc(x, y, t=0.0):
+            return 0.0
+
+        def solfunc(x, y, t=0.0):
+            return 100.0 if y >= 1.0 or x >= 1.0 else 0.0
+
+        x = np.linspace(0.0, lx, num=nx, endpoint=True)
+        y = np.linspace(0.0, ly, num=ny, endpoint=True)
+
+        dx = lx / nx
+        dy = ly / ny
+
+        rho = 1.0
+        c = 1.0
+
+        contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
+
     # ***************************************************************
     #                        Criando os nós
     # ***************************************************************
