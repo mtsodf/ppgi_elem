@@ -251,7 +251,7 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False):
 
         contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
 
-    if entrada == 7:
+    if entrada == 8:
         lx = 1.0
         ly = 1.0
 
