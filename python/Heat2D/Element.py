@@ -306,3 +306,4 @@ class Node(object):
         self.f = None
         self.p = 0
         self.q = 0
+        self.dirichletBoundary = False

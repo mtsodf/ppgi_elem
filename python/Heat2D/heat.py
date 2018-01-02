@@ -42,6 +42,9 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False):
 
     initialCondition = None
 
+    xOrigin = 0.0
+    yOrigin = 0.0
+
     if entrada == 0:
         def ffunc(x, y, t=0.0):
             return 2 * pi * pi * sin(pi * x) * sin(pi * y)
@@ -272,6 +275,29 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False):
 
         contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
 
+    if entrada == 9:
+        xOrigin = -pi
+        yOrigin = -pi
+        lx = 2*pi
+        ly = 2*pi
+
+        def ffunc(x, y, t=0.0):
+            return x*cos(x*t)*cos(y) + t*t*sin(x*t)*cos(y)+sin(x*t)*cos(y)
+
+        def solfunc(x, y, t=0.0):
+            return sin(t*x)*cos(y)
+
+        x = np.linspace(-np.pi, np.pi, num=nx, endpoint=True)
+        y = np.linspace(-np.pi, np.pi, num=ny, endpoint=True)
+
+        dx = lx / nx
+        dy = ly / ny
+
+        rho = 1.0
+        c = 1.0
+
+        contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]                
+
     # ***************************************************************
     #                        Criando os nós
     # ***************************************************************
@@ -279,11 +305,11 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False):
     nodes = []
 
     eqCurrent = 0
-    y = 0.0
+    y = yOrigin
     inode = 0
     for j in range(ny + 1):
 
-        x = 0.0
+        x = xOrigin
 
         for i in range(nx + 1):
 
@@ -300,6 +326,7 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False):
                     sol.append(solfunc(x, y))
                     eqCurrent += 1
                 else:
+                    nodes[-1].dirichletBoundary = True
                     nodes[inode].p = solfunc(x, y)
 
             nodes[inode].f = ffunc

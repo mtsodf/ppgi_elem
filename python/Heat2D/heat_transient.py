@@ -10,12 +10,12 @@ import os
 from numpy.linalg import norm
 
 
-def SolveSedo(M, K, F, d0, nsteps, alpha, dt):
-    v0 = np.linalg.solve(M, F - np.dot(K, d0))
+def SolveSedo(M, K, F, d0, nsteps, alpha, dt, v0):
+
 
     dpreditor = d0 + np.dot(dt * (1 - alpha), v0)
 
-    v0 = np.linalg.solve(M + np.dot(alpha * dt, K), F - np.dot(K, dpreditor))
+    v0[:] = np.linalg.solve(M + np.dot(alpha * dt, K), F - np.dot(K, dpreditor))
     d0 = dpreditor + np.dot(alpha * dt, v0)
 
     return d0.copy()
@@ -37,6 +37,7 @@ def SolveSedoNewtonImplicit(M, K, F, d0, nsteps, dt):
 
 def run_transient_case(entrada, nx, ny, dt, alpha, newton, triangles, nsteps, verbose=False, plot3D=False, plotdelta=1, gif=True):
     elements, nodes, neq, sol = ConstructCase(entrada, nx, ny, verbose=False)
+
 
     nelem = len(elements)
 
@@ -77,16 +78,25 @@ def run_transient_case(entrada, nx, ny, dt, alpha, newton, triangles, nsteps, ve
     for step in range(1, nsteps + 1):
         t = step * dt
 
+        # Atualizando Condicao de contorno com o tempo
+        for node in nodes:
+            if node.dirichletBoundary:
+                node.p = sol(node.coords[0], node.coords[1], t)
+
         if verbose:
             print "Calcundo time step %d. Tempo: %f." % (step, t)
 
         F = CalcF(elements, neq, t)
+
         if newton:
             if verbose:
                 print "Utilizando metodo de newton"
             sols.append(SolveSedoNewtonImplicit(M, K, F, d0, nsteps, dt))
         else:
-            sols.append(SolveSedo(M, K, F, d0, nsteps, alpha, dt))
+            if step == 1:
+                v0 = np.linalg.solve(M, F - np.dot(K, d0))
+
+            sols.append(SolveSedo(M, K, F, d0, nsteps, alpha, dt, v0[:]))
 
         d0 = sols[-1]
 
@@ -111,9 +121,15 @@ def run_transient_case(entrada, nx, ny, dt, alpha, newton, triangles, nsteps, ve
 
             fig = plt.figure(figsize=(16, 9))
 
+            t = step * dt
+
+            # Atualizando Condicao de contorno com o tempo
+            for node in nodes:
+                if node.dirichletBoundary:
+                    node.p = sol(node.coords[0], node.coords[1], t)
+
             X, Y, Z = GetGridValues(nodes, sols[step])
 
-            t = step * dt
 
             Zsol = np.zeros(len(Z))
 
@@ -131,6 +147,9 @@ def run_transient_case(entrada, nx, ny, dt, alpha, newton, triangles, nsteps, ve
 
                 ax = fig.add_subplot(121, projection='3d')
                 ax2 = fig.add_subplot(122, projection='3d')
+
+                ax.set_title("Solucao Calculada")
+                ax2.set_title("Solucao Analitica")
 
                 plot_surface(X, Y, Z, ax=ax, fig=fig,
                              zmin=zmin, zmax=zmax + zmax / 1000)
