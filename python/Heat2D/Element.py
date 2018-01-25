@@ -8,13 +8,16 @@ intPoints = [[-w, -w, 1.0], [w, -w, 1.0], [w, w, 1.0], [-w, w, 1.0]]
 class Element(object):
     """docstring for Element"""
 
-    def __init__(self, iel, Q=None, rho=None, c=None):
+    def __init__(self, iel, Q=None, rho=None, c=None, E=None, v=None, elasticidade=False, ndim=1):
         super(Element, self).__init__()
 
         self.nodes = []
         self.iel = iel
         self.neumannBoundary = []
 
+        self.ndim = ndim
+
+        # Propriedades de Fluxo de Calor
         if Q is None:
             self.Q = np.identity(2)
         else:
@@ -23,7 +26,47 @@ class Element(object):
         self.rho = rho
         self.c = c
 
+        # Propriedades de Elasticidade
+        self.E = E
+        self.v = v
+
+        self.elasticidade = elasticidade
+
         self.qtdNodes = None
+
+
+    def Elasticidade(self):
+        D = np.zeros((3,3))
+
+        D = D*(self.E/(1-self.v*self.v))
+
+        D[0,0] = 1
+        D[1,1] = 1
+        D[2,2] = (1-self.v)/2
+
+        D[0,1] = self.v
+        D[1,0] = self.v
+
+
+        return D
+
+    def BeeMat(self, dFuncFormCoordOrig):
+
+        if self.elasticidade:
+
+            B = np.zeros((3, 16))
+
+            for i in xrange(8):
+                B[0, 2*i] = dFuncForm[0, i]
+                B[1, 2*i+1] = dFuncForm[1, i]
+                B[2, 2*i] = dFuncForm[1, i]
+                B[2, 2*i+1] = dFuncForm[0, i]
+
+            return B
+
+        return dFuncFormCoordOrig
+
+
 
     def CalcKlocal(self):
         Klocal = np.zeros((self.QtdNodes(), self.QtdNodes()))
@@ -42,6 +85,8 @@ class Element(object):
 
             B = np.dot(invJ, D)
 
+            B = self.BeeMat(B)
+
             Bt = np.transpose(B)
 
             Klocal = Klocal + w * np.dot(np.dot(Bt, self.Q), B) * detJ
@@ -59,7 +104,13 @@ class Element(object):
     def AddNode(self, node):
         self.nodes.append(node)
 
+
     def CalcMLocal(self):
+
+        """
+            Calculo da matriz M para caso transiente
+        """
+
         Mlocal = np.zeros((self.qtdNodes, self.qtdNodes))
 
         coord = self.GetCoords()
@@ -80,9 +131,9 @@ class Element(object):
 
     def CalcFlocal(self, t=0.0):
 
-        F = np.zeros(self.QtdNodes())
-        P = np.zeros(self.QtdNodes())
-        fValues = np.zeros(self.QtdNodes())
+        F = np.zeros((self.QtdNodes(), self.ndim))
+        P = np.zeros((self.QtdNodes(), self.ndim))
+        fValues = np.zeros((self.QtdNodes(), self.ndim))
 
         for i, node in enumerate(self.nodes):
             fValues[i] = node.f(node.coords[0], node.coords[1], t)
@@ -160,8 +211,8 @@ class Element(object):
 
 class Quadrilateral(Element):
 
-    def __init__(self, iel, Q=None, rho=None, c=None):
-        Element.__init__(self, iel, Q, rho, c)
+    def __init__(self, iel, Q=None, rho=None, c=None, E=None, v=None, elasticidade=False, ndim=1):
+        Element.__init__(self, iel, Q, rho, c, E, v, elasticidade, ndim)
         self.qtdNodes = 4
 
     def setBoundary(self, boundary, q1, q2):
@@ -255,8 +306,8 @@ class Quadrilateral(Element):
 
 class Triangle(Element):
 
-    def __init__(self, iel, Q=None, rho=None, c=None):
-        Element.__init__(self, iel, Q, rho, c)
+    def __init__(self, iel, Q=None, rho=None, c=None, E=None, v=None, elasticidade=False):
+        Element.__init__(self, iel, Q, rho, c, E, v, elasticidade)
         self.qtdNodes = 3
         self.quadrilateral = Quadrilateral(None, Q, rho, c)
 
