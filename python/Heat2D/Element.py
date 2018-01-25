@@ -35,10 +35,8 @@ class Element(object):
         self.qtdNodes = None
 
 
-    def Elasticidade(self):
+    def Hooke(self):
         D = np.zeros((3,3))
-
-        D = D*(self.E/(1-self.v*self.v))
 
         D[0,0] = 1
         D[1,1] = 1
@@ -47,6 +45,7 @@ class Element(object):
         D[0,1] = self.v
         D[1,0] = self.v
 
+        D = D*(self.E/(1-self.v*self.v))
 
         return D
 
@@ -54,13 +53,13 @@ class Element(object):
 
         if self.elasticidade:
 
-            B = np.zeros((3, 16))
+            B = np.zeros((3, self.ndim*self.QtdNodes()))
 
-            for i in xrange(8):
-                B[0, 2*i] = dFuncForm[0, i]
-                B[1, 2*i+1] = dFuncForm[1, i]
-                B[2, 2*i] = dFuncForm[1, i]
-                B[2, 2*i+1] = dFuncForm[0, i]
+            for i in xrange(self.QtdNodes()):
+                B[0, 2*i] = dFuncFormCoordOrig[0, i]
+                B[1, 2*i+1] = dFuncFormCoordOrig[1, i]
+                B[2, 2*i] = dFuncFormCoordOrig[1, i]
+                B[2, 2*i+1] = dFuncFormCoordOrig[0, i]
 
             return B
 
@@ -69,7 +68,7 @@ class Element(object):
 
 
     def CalcKlocal(self):
-        Klocal = np.zeros((self.QtdNodes(), self.QtdNodes()))
+        Klocal = np.zeros((self.QtdDegFree(), self.QtdDegFree()))
 
         coord = self.GetCoords()
 
@@ -89,7 +88,9 @@ class Element(object):
 
             Bt = np.transpose(B)
 
-            Klocal = Klocal + w * np.dot(np.dot(Bt, self.Q), B) * detJ
+            Q = self.Hooke() if self.elasticidade else self.Q
+
+            Klocal = Klocal + w * np.dot(np.dot(Bt, Q), B) * detJ
 
         return Klocal
 
@@ -129,11 +130,38 @@ class Element(object):
         Mlocal = Mlocal * self.rho * self.c
         return Mlocal
 
+    def CalcFlocalStrain(self):
+
+        F = np.zeros(self.QtdNodes()*self.ndim)
+        P = np.zeros(self.QtdNodes()*self.ndim)
+        fValues = np.zeros((self.QtdNodes()*self.ndim))
+
+        for i, node in enumerate(self.nodes):
+            fs = node.f(node.coords[0], node.coords[1])
+            fValues[2*i] = fs[0]
+            fValues[2*i+1] = fs[1]
+            # P[2*i] = node.p[0]
+            # P[2*i+1] = node.p[1]
+
+        fValues = np.transpose(fValues)
+        coord = self.GetCoords()
+
+        for e, n, w in intPoints:
+            phi = np.repeat(self.VecFuncForm(e, n), 2)
+
+            D = self.FormsDeriv(e, n)
+            J = np.dot(D, coord)
+            detJ = np.linalg.det(J)
+
+            F = F + w*np.multiply(phi, np.dot(fValues, phi)) * detJ
+
+        return F
+
     def CalcFlocal(self, t=0.0):
 
-        F = np.zeros((self.QtdNodes(), self.ndim))
-        P = np.zeros((self.QtdNodes(), self.ndim))
-        fValues = np.zeros((self.QtdNodes(), self.ndim))
+        F = np.zeros(self.QtdNodes()*self.ndim)
+        P = np.zeros(self.QtdNodes()*self.ndim)
+        fValues = np.zeros((self.QtdNodes()*self.ndim))
 
         for i, node in enumerate(self.nodes):
             fValues[i] = node.f(node.coords[0], node.coords[1], t)
@@ -142,14 +170,20 @@ class Element(object):
         fValues = np.transpose(fValues)
         coord = self.GetCoords()
 
+        phi2d = np.zeros((self.QtdNodes(), self.ndim))
         for e, n, w in intPoints:
             phi = self.VecFuncForm(e, n)
 
+            for i in range(self.ndim):
+                phi2d[:, i] = phi[:,0]
             D = self.FormsDeriv(e, n)
             J = np.dot(D, coord)
             detJ = np.linalg.det(J)
 
-            F = F + np.dot(phi, np.dot(fValues, phi)) * detJ
+            F = F + np.dot(phi2d, np.dot(fValues, phi)) * detJ
+
+        if self.elasticidade:
+            return F
 
         # Parcela da condicao de contorno de Dirichlet
         F = F - np.dot(self.CalcKlocal(), P)
@@ -179,6 +213,9 @@ class Element(object):
 
     def QtdNodes(self):
         return len(self.nodes)
+
+    def QtdDegFree(self):
+        return self.QtdNodes()*self.ndim
 
 
     def GetValue(self, sol):
@@ -278,7 +315,7 @@ class Quadrilateral(Element):
 
         if vert == 0:
             return (1.0 - e) * (1.0 - n) / 4.0
-        elif vert == 1.0:
+        elif vert == 1:
             return (1.0 + e) * (1.0 - n) / 4.0
         elif vert == 2:
             return (1.0 + e) * (1.0 + n) / 4.0
