@@ -62,13 +62,10 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False):
 
         x = np.linspace(0.0, lx, num=nx+1, endpoint=True)
         y = np.linspace(0.0, ly, num=ny+1, endpoint=True)
-        print x
-        print y
+
         dx = lx / nx
         dy = ly / ny
 
-        print dx
-        print dy
 
         E = 1.0
         v = 0.25
