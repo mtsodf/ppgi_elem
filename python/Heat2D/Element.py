@@ -90,7 +90,7 @@ class Element(object):
 
             Q = self.Hooke() if self.elasticidade else self.Q
 
-            Klocal = Klocal + w * np.dot(np.dot(Bt, Q), B) * detJ
+            Klocal = Klocal + w * np.dot(np.dot(Bt, Q), B) * abs(detJ)
 
         return Klocal
 
@@ -341,6 +341,7 @@ class Quadrilateral(Element):
 
         return tri0, tri1
 
+
 class Triangle(Element):
 
     def __init__(self, iel, Q=None, rho=None, c=None, E=None, v=None, elasticidade=False):
@@ -380,7 +381,6 @@ class Triangle(Element):
             return self.quadrilateral.dFuncForm(e, n, 2, var) + self.quadrilateral.dFuncForm(e, n, 3, var)
 
         return float('nan')
-
 
 
 class Node(object):
