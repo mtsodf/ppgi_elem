@@ -30,7 +30,7 @@ def getBoundary(i, j, nx, ny):
     return None
 
 
-def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False):
+def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False, distorce=False):
 
     rho = None
     c = None
@@ -72,6 +72,34 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False):
 
         contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
 
+    if entrada == 1:
+        def ffunc(x, y, t=0.0):
+            E = 1
+            v = 0.25
+            f = np.zeros(2)
+            f[0] = (-pi*pi*E*v/(v*v-1)) *cos(pi*x)*cos(pi*y) + pi*pi*E/(2*v+2) * cos(pi*x) * cos(pi*y)
+            f[1] = pi*pi*(E/(v*v-1))*sin(pi*x)*sin(pi*y) - (pi*pi*E/(2*v+2))*sin(pi*x)*sin(pi*y)
+            return f
+
+        def solfunc(x, y):
+            return np.array([0, sin(pi*x)*sin(pi*y)])
+
+        lx = 1.0
+        ly = 1.0
+
+        x = np.linspace(0.0, lx, num=nx+1, endpoint=True)
+        y = np.linspace(0.0, ly, num=ny+1, endpoint=True)
+
+        dx = lx / nx
+        dy = ly / ny
+
+
+        E = 1.0
+        v = 0.25
+
+        contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
+
+
 
     # ***************************************************************
     #                        Criando os nós
@@ -82,31 +110,48 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False):
     eqCurrent = 0
     y = yOrigin
     inode = 0
+
     for j in range(ny + 1):
+
+        if j == ny:
+            y = yOrigin + ly
 
         x = xOrigin
 
         for i in range(nx + 1):
 
-            nodes.append(Node(inode, x, y))
+            if i == nx:
+                x = xOrigin + lx
+
+            xNode = x
+            yNode = y
+
+            if distorce and i!= 0 and j!= 0 and i!=nx and j!=ny:
+                xNode += np.random.uniform(-0.1*dx, 0.1*dx, 1)[0]
+                yNode += np.random.uniform(-0.1*dy, 0.1*dy, 1)[0]
+
+            nodes.append(Node(inode, xNode, yNode))
 
             if getBoundary(i, j, nx, ny) is None:
                 nodes[-1].eq = eqCurrent
-                sol.append(solfunc(x, y))
+                sol.append(solfunc(xNode, yNode))
                 eqCurrent += 2
             else:
                 c = contorno[getBoundary(i, j, nx, ny)]
                 if c == NEUMANN:
                     nodes[-1].eq = eqCurrent
-                    sol.append(solfunc(x, y))
+                    sol.append(solfunc(xNode, yNode))
                     eqCurrent += 1
                 else:
                     nodes[-1].dirichletBoundary = True
-                    nodes[inode].p = solfunc(x, y)
+                    nodes[inode].p = solfunc(xNode, yNode)
 
             nodes[inode].f = ffunc
 
+
             x += dx
+
+
             inode += 1
 
         y += dy
@@ -227,9 +272,9 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False):
     return elements, nodes, neq, solfunc
 
 
-def run_case(entrada, nx, ny, triangles=0.0, verbose=False, plot=False):
+def run_case(entrada, nx, ny, triangles=0.0, verbose=False, plot=False, distorce=False):
 
-    elements, nodes, neq, solfunc = ConstructCase(entrada, nx, ny, triangles, verbose)
+    elements, nodes, neq, solfunc = ConstructCase(entrada, nx, ny, triangles, verbose, distorce)
 
 
     sol = np.zeros(neq)
@@ -291,29 +336,29 @@ def run_case(entrada, nx, ny, triangles=0.0, verbose=False, plot=False):
         fig = plt.figure(figsize=(30, 15))
         ax = fig.add_subplot(121, projection='3d')
 
-        X, Y, Z = GetGridValues(nodes, calcsol)
+        #X, Y, Z = GetGridValues(nodes, calcsol)
 
-        ax.scatter3D(X, Y, Z)
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
-        ax.set_title("Solucao Calculada")
+        # ax.scatter3D(X, Y, Z)
+        # ax.set_xlabel('X')
+        # ax.set_ylabel('Y')
+        # ax.set_zlabel('Z')
+        # ax.set_title("Solucao Calculada")
 
-        ax = fig.add_subplot(122, projection='3d')
+        # ax = fig.add_subplot(122, projection='3d')
 
-        ax.scatter3D(X, Y, np.ravel(z2))
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
-        ax.set_title("Solucao Analitica")
+        # ax.scatter3D(X, Y, np.ravel(z2))
+        # ax.set_xlabel('X')
+        # ax.set_ylabel('Y')
+        # ax.set_zlabel('Z')
+        # ax.set_title("Solucao Analitica")
 
-        plt.show()
+        # plt.show()
 
 
 
         fig = plt.figure(figsize=(16, 9))
         ax = fig.add_subplot(111)
-        plot_map(X, Y, Z, ax=ax, fig=fig, zmin=np.amin(z2), zmax=np.amax(z2))
+        #plot_map(X, Y, Z, ax=ax, fig=fig, zmin=np.amin(z2), zmax=np.amax(z2))
         plot_elements(elements, ax)
         plt.savefig('permanent.png')
         plt.close()
