@@ -56,8 +56,10 @@ class Element(object):
             B = np.zeros((3, self.ndim*self.QtdNodes()))
 
             for i in xrange(self.QtdNodes()):
+
                 B[0, 2*i] = dFuncFormCoordOrig[0, i]
                 B[1, 2*i+1] = dFuncFormCoordOrig[1, i]
+
                 B[2, 2*i] = dFuncFormCoordOrig[1, i]
                 B[2, 2*i+1] = dFuncFormCoordOrig[0, i]
 
@@ -134,26 +136,34 @@ class Element(object):
 
         F = np.zeros(self.QtdNodes()*self.ndim)
         P = np.zeros(self.QtdNodes()*self.ndim)
-        fValues = np.zeros((self.QtdNodes()*self.ndim))
+        fValues = np.zeros((self.QtdNodes(), self.ndim))
 
         for i, node in enumerate(self.nodes):
             fs = node.f(node.coords[0], node.coords[1])
-            fValues[2*i] = fs[0]
-            fValues[2*i+1] = fs[1]
+            fValues[i, 0] = fs[0]
+            fValues[i, 1] = fs[1]
             # P[2*i] = node.p[0]
             # P[2*i+1] = node.p[1]
 
-        fValues = np.transpose(fValues)
-        coord = self.GetCoords()
 
+        coord = self.GetCoords()
+        B = np.zeros((self.QtdNodes()*self.ndim, self.ndim))
         for e, n, w in intPoints:
-            phi = np.repeat(self.VecFuncForm(e, n), 2)
+            phi = self.VecFuncForm(e, n)
+
+            for i in xrange(self.QtdNodes()):
+                B[2*i, 0] = phi[i]
+                B[2*i+1, 1] = phi[i]
 
             D = self.FormsDeriv(e, n)
             J = np.dot(D, coord)
             detJ = np.linalg.det(J)
+            aux = np.transpose(fValues)
+            aux = np.dot(aux, phi)
 
-            F = F + w*np.multiply(phi, np.dot(fValues, phi)) * detJ
+            for i in xrange(self.QtdNodes()*self.ndim):
+
+                F[i] = F[i] + np.asarray(w*abs(detJ)*np.dot(B, aux))[i]
 
         return F
 

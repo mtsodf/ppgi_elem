@@ -50,19 +50,25 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False):
             E = 1
             v = 0.25
             f = np.zeros(2)
-            f[0] = -pi*pi*sin(pi*x) * (E/(1-v*v))
+            f[0] = pi*pi*(E/(v*v-1))*sin(pi*x)*sin(pi*y) - (pi*pi*E/(2*v+2))*sin(pi*x)*sin(pi*y)
+            f[1] = (-pi*pi*E*v/(v*v-1)) *cos(pi*x)*cos(pi*y) + pi*pi*E/(2*v+2) * cos(pi*x) * cos(pi*y)
             return f
 
         def solfunc(x, y):
-            return np.array([sin(pi * x), 0])
+            return np.array([sin(pi * x)*sin(pi*y), 0])
 
         lx = 1.0
         ly = 1.0
 
-        x = np.linspace(0.0, lx, num=nx, endpoint=True)
-        y = np.linspace(0.0, ly, num=ny, endpoint=True)
+        x = np.linspace(0.0, lx, num=nx+1, endpoint=True)
+        y = np.linspace(0.0, ly, num=ny+1, endpoint=True)
+        print x
+        print y
         dx = lx / nx
         dy = ly / ny
+
+        print dx
+        print dy
 
         E = 1.0
         v = 0.25
@@ -109,6 +115,7 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False):
         y += dy
 
     sol = np.array(sol)
+
 
     # ***************************************************************
     #                     Criando os elementos
@@ -322,9 +329,9 @@ def main():
     parser = argparse.ArgumentParser(description='Transferencia de Calor 2D')
     parser.add_argument('--entrada', type=int, default=0,
                         help='quantidade de elementos na direção x')
-    parser.add_argument('--nx', type=int, default=40,
+    parser.add_argument('--nx', type=int, default=10,
                         help='quantidade de elementos na direção x')
-    parser.add_argument('--ny', type=int, default=40,
+    parser.add_argument('--ny', type=int, default=10,
                         help='quantidade de elementos na direção y')
     parser.add_argument('--triangles', type=float, default=0.0,
                         help='porcentagem aproximada de triangulos da malha')

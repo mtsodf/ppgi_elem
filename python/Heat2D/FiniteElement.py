@@ -53,8 +53,8 @@ def CalcFStrain(elements, neq):
 
         for i, node in enumerate(elem.nodes):
             if node.eq is not None:
-                F[node.eq] += Flocal[i]
-                F[node.eq+1] += Flocal[i+1]
+                F[node.eq] += Flocal[2*i]
+                F[node.eq+1] += Flocal[2*i+1]
 
     return F
 
