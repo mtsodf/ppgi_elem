@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 from math import sin, pi
 import argparse
 
-n = 40
 
 parser = argparse.ArgumentParser(description='Metodo de Garlekin')
 parser.add_argument('--entrada', type=int, default=0, help='entrada do problema')
@@ -69,6 +68,11 @@ for i in xrange(n-1):
     if i > 0:
         K[i,i-1] = -alpha/h[i] + beta*h[i]/6
 
+print ""
+print "##############################################################"
+print "                        Matriz K"
+print "##############################################################"
+print K
 
 ######################################################################
 # Montagem do lado direito
@@ -86,8 +90,12 @@ for i in xrange(n-1):
     if i < n - 2:
         F[i] += f[i+1]*h[i+1]/6
 
-
+print ""
+print "##############################################################"
+print "                          Vetor F"
+print "##############################################################"
 print F
+print ""
 
 ######################################################################
 # Solucao do Sistema Linear
