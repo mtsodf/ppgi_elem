@@ -195,79 +195,7 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False, distorce=False)
 
     neq = eqCurrent
 
-    # ***************************************************************
-    #                Setando condicao de Neummann
-    # ***************************************************************
 
-    if contorno[0] == NEUMANN:
-        for i in range(nx):
-            elem = elements[i + nx * 0]
-            node1, node2 = elem.getBoundary(0)
-
-            n = np.array([0, -1])
-
-            du = np.array([solfuncDx(node1.coords), solfuncDy(node1.coords)])
-            qvetor = - np.dot(elem.Q, du)
-            q1 = np.dot(qvetor, n)
-
-            du = np.array([solfuncDx(node2.coords), solfuncDy(node2.coords)])
-            qvetor = - np.dot(elem.Q, du)
-            q2 = np.dot(qvetor, n)
-
-            elem.setBoundary(0, q1, q2)
-
-    if contorno[1] == NEUMANN:
-        for j in range(ny):
-            elem = elements[nx - 1 + nx * j]
-            node1, node2 = elem.getBoundary(1)
-
-            n = np.array([1, 0])
-
-            du = np.array([solfuncDx(node1.coords), solfuncDy(node1.coords)])
-            qvetor = - np.dot(elem.Q, du)
-            q1 = np.dot(qvetor, n)
-
-            du = np.array([solfuncDx(node2.coords), solfuncDy(node2.coords)])
-            qvetor = - np.dot(elem.Q, du)
-            q2 = np.dot(qvetor, n)
-
-            elem.setBoundary(1, q1, q2)
-
-    if contorno[2] == NEUMANN:
-        for i in range(nx):
-            elem = elements[i + nx * (ny - 1)]
-
-            node1, node2 = elem.getBoundary(2)
-
-            n = np.array([0, 1])
-
-            du = np.array([solfuncDx(node1.coords), solfuncDy(node1.coords)])
-            qvetor = - np.dot(elem.Q, du)
-            q1 = np.dot(qvetor, n)
-
-            du = np.array([solfuncDx(node2.coords), solfuncDy(node2.coords)])
-            qvetor = - np.dot(elem.Q, du)
-            q2 = np.dot(qvetor, n)
-
-            elem.setBoundary(2, q1, q2)
-
-    if contorno[3] == NEUMANN:
-        for j in range(ny):
-            elem = elements[nx * j]
-
-            node1, node2 = elem.getBoundary(3)
-
-            n = np.array([-1, 0])
-
-            du = np.array([solfuncDx(node1.coords), solfuncDy(node1.coords)])
-            qvetor = - np.dot(elem.Q, du)
-            q1 = np.dot(qvetor, n)
-
-            du = np.array([solfuncDx(node2.coords), solfuncDy(node2.coords)])
-            qvetor = - np.dot(elem.Q, du)
-            q2 = np.dot(qvetor, n)
-
-            elem.setBoundary(3, q1, q2)
 
     return elements, nodes, neq, solfunc
 
