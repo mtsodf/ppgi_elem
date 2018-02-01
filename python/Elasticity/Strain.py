@@ -32,9 +32,6 @@ def getBoundary(i, j, nx, ny):
 
 def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False, distorce=False):
 
-    rho = None
-    c = None
-
     ffunc = None
     solfunc = None
 

@@ -136,7 +136,7 @@ class Element(object):
         return len(self.nodes)
 
     def QtdDegFree(self):
-        return self.QtdNodes()*self.ndim
+        return self.qtdNodes*self.ndim
 
 
     def GetValue(self, sol):

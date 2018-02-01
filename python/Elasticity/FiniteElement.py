@@ -1,24 +1,18 @@
 import numpy as np
 
 
-def BuildStiffness(elements, neq):
+class FemCase(object):
+    """docstring for FemCase"""
+    def __init__(self, elements, nodes, ndim=2):
+        super(FemCase, self).__init__()
+        self.elements = elements
+        self.nodes = nodes
 
-    K = np.zeros((neq, neq))
-    nelem = len(elements)
+        self.P = None
 
-    for iel in range(nelem):
-        elem = elements[iel]
-        Klocal = elem.CalcKlocal()
+    def SetDirichletBoundary(func=None):
+        pass
 
-        for j, nodej in enumerate(elem.nodes):
-            for i, nodei in enumerate(elem.nodes):
-                globalI = nodei.eq
-                globalJ = nodej.eq
-
-                if globalI is not None and globalJ is not None:
-                    K[globalI, globalJ] += Klocal[i, j]
-
-    return K
 
 
 def BuildStiffnessStrain(elements, neq):
@@ -60,39 +54,6 @@ def CalcFStrain(elements, neq):
 
     return F
 
-
-def CalcF(elements, neq, t=0.0):
-    F = np.zeros(neq)
-
-    nelem = len(elements)
-
-    for iel in range(nelem):
-        elem = elements[iel]
-        Flocal = elem.CalcFlocal(t=t)
-
-        for i, node in enumerate(elem.nodes):
-            if node.eq is not None:
-                F[node.eq] += Flocal[i]
-    return F
-
-
-def BuildM(elements, neq):
-    M = np.zeros((neq, neq))
-    nelem = len(elements)
-
-    for iel in range(nelem):
-        elem = elements[iel]
-        Mlocal = elem.CalcMLocal()
-
-        for j, nodej in enumerate(elem.nodes):
-            for i, nodei in enumerate(elem.nodes):
-                globalI = nodei.eq
-                globalJ = nodej.eq
-
-                if globalI is not None and globalJ is not None:
-                    M[globalI, globalJ] += Mlocal[i, j]
-
-    return M
 
 
 def GetGridValues(nodes, sol):
