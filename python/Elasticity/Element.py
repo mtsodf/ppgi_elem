@@ -8,7 +8,7 @@ intPoints = [[-w, -w, 1.0], [w, -w, 1.0], [w, w, 1.0], [-w, w, 1.0]]
 class Element(object):
     """docstring for Element"""
 
-    def __init__(self, iel, Q=None, rho=None, c=None, E=None, v=None, elasticidade=False, ndim=1):
+    def __init__(self, iel, E=None, v=None, ndim=1):
         super(Element, self).__init__()
 
         self.nodes = []
@@ -17,59 +17,48 @@ class Element(object):
 
         self.ndim = ndim
 
-        # Propriedades de Fluxo de Calor
-        if Q is None:
-            self.Q = np.identity(2)
-        else:
-            self.Q = Q
-
-        self.rho = rho
-        self.c = c
-
         # Propriedades de Elasticidade
         self.E = E
         self.v = v
-
-        self.elasticidade = elasticidade
-
         self.qtdNodes = None
 
 
     def Hooke(self):
-        D = np.zeros((3,3))
 
-        D[0,0] = 1
-        D[1,1] = 1
-        D[2,2] = (1-self.v)/2
+        if self.ndim == 2:
 
-        D[0,1] = self.v
-        D[1,0] = self.v
+            D = np.zeros((3,3))
 
-        D = D*(self.E/(1-self.v*self.v))
+            D[0,0] = 1
+            D[1,1] = 1
+            D[2,2] = (1-self.v)/2
 
-        return D
+            D[0,1] = self.v
+            D[1,0] = self.v
+
+            D = D*(self.E/(1-self.v*self.v))
+
+            return D
+
+        raise NotImplementedError("Metodo nao implementado para ndim = %d" % self.ndim)
 
     def BeeMat(self, dFuncFormCoordOrig):
 
-        if self.elasticidade:
+        B = np.zeros((3, self.ndim*self.QtdNodes()))
 
-            B = np.zeros((3, self.ndim*self.QtdNodes()))
+        for i in xrange(self.QtdNodes()):
 
-            for i in xrange(self.QtdNodes()):
+            B[0, 2*i] = dFuncFormCoordOrig[0, i]
+            B[1, 2*i+1] = dFuncFormCoordOrig[1, i]
 
-                B[0, 2*i] = dFuncFormCoordOrig[0, i]
-                B[1, 2*i+1] = dFuncFormCoordOrig[1, i]
+            B[2, 2*i] = dFuncFormCoordOrig[1, i]
+            B[2, 2*i+1] = dFuncFormCoordOrig[0, i]
 
-                B[2, 2*i] = dFuncFormCoordOrig[1, i]
-                B[2, 2*i+1] = dFuncFormCoordOrig[0, i]
-
-            return B
-
-        return dFuncFormCoordOrig
-
+        return B
 
 
     def CalcKlocal(self):
+
         Klocal = np.zeros((self.QtdDegFree(), self.QtdDegFree()))
 
         coord = self.GetCoords()
@@ -90,11 +79,12 @@ class Element(object):
 
             Bt = np.transpose(B)
 
-            Q = self.Hooke() if self.elasticidade else self.Q
+            H = self.Hooke()
 
-            Klocal = Klocal + w * np.dot(np.dot(Bt, Q), B) * abs(detJ)
+            Klocal = Klocal + w * np.dot(np.dot(Bt, H), B) * abs(detJ)
 
         return Klocal
+
 
     def GetCoords(self):
         coord = np.zeros((self.QtdNodes(), 2))
@@ -108,30 +98,6 @@ class Element(object):
         self.nodes.append(node)
 
 
-    def CalcMLocal(self):
-
-        """
-            Calculo da matriz M para caso transiente
-        """
-
-        Mlocal = np.zeros((self.qtdNodes, self.qtdNodes))
-
-        coord = self.GetCoords()
-
-        for e, n, w in intPoints:
-
-            D = self.FormsDeriv(e, n)
-
-            J = np.dot(D, coord)
-
-            detJ = np.linalg.det(J)
-
-            v = self.VecFuncForm(e, n)
-            Mlocal += w * (np.outer(v, v)) * detJ
-
-        Mlocal = Mlocal * self.rho * self.c
-        return Mlocal
-
     def CalcFlocalStrain(self):
 
         F = np.zeros(self.QtdNodes()*self.ndim)
@@ -142,8 +108,6 @@ class Element(object):
             fs = node.f(node.coords[0], node.coords[1])
             fValues[i, 0] = fs[0]
             fValues[i, 1] = fs[1]
-            # P[2*i] = node.p[0]
-            # P[2*i+1] = node.p[1]
 
 
         coord = self.GetCoords()
@@ -164,59 +128,6 @@ class Element(object):
             for i in xrange(self.QtdNodes()*self.ndim):
 
                 F[i] = F[i] + np.asarray(w*abs(detJ)*np.dot(B, aux))[i]
-
-        return F
-
-    def CalcFlocal(self, t=0.0):
-
-        F = np.zeros(self.QtdNodes()*self.ndim)
-        P = np.zeros(self.QtdNodes()*self.ndim)
-        fValues = np.zeros((self.QtdNodes()*self.ndim))
-
-        for i, node in enumerate(self.nodes):
-            fValues[i] = node.f(node.coords[0], node.coords[1], t)
-            P[i] = node.p
-
-        fValues = np.transpose(fValues)
-        coord = self.GetCoords()
-
-        phi2d = np.zeros((self.QtdNodes(), self.ndim))
-        for e, n, w in intPoints:
-            phi = self.VecFuncForm(e, n)
-
-            for i in range(self.ndim):
-                phi2d[:, i] = phi[:,0]
-            D = self.FormsDeriv(e, n)
-            J = np.dot(D, coord)
-            detJ = np.linalg.det(J)
-
-            F = F + np.dot(phi2d, np.dot(fValues, phi)) * detJ
-
-        if self.elasticidade:
-            return F
-
-        # Parcela da condicao de contorno de Dirichlet
-        F = F - np.dot(self.CalcKlocal(), P)
-
-        # Parcela da condicao de contorno de Neumann
-        for boundary in self.neumannBoundary:
-
-            node1, node2 = self.getBoundary(boundary)
-            inode1 = boundary
-            inode2 = (boundary + 1) % self.qtdNodes
-            Q = np.array([node1.q, node2.q])
-
-            Qf = np.zeros(2)
-            for e in [-w, w]:
-
-                detJ = np.linalg.norm(node1.coords - node2.coords)
-
-                phi = self.VecFuncForm1d(e)
-
-                Qf += np.dot(phi, np.dot(Q, phi)) * detJ / 2
-
-            F[inode1] -= Qf[0]
-            F[inode2] -= Qf[1]
 
         return F
 
@@ -258,8 +169,8 @@ class Element(object):
 
 class Quadrilateral(Element):
 
-    def __init__(self, iel, Q=None, rho=None, c=None, E=None, v=None, elasticidade=False, ndim=1):
-        Element.__init__(self, iel, Q, rho, c, E, v, elasticidade, ndim)
+    def __init__(self, iel, E=None, v=None):
+        Element.__init__(self, iel, E, v, 2)
         self.qtdNodes = 4
 
     def setBoundary(self, boundary, q1, q2):
@@ -354,7 +265,7 @@ class Quadrilateral(Element):
 
 class Triangle(Element):
 
-    def __init__(self, iel, Q=None, rho=None, c=None, E=None, v=None, elasticidade=False):
+    def __init__(self, iel, E=None, v=None):
         Element.__init__(self, iel, Q, rho, c, E, v, elasticidade)
         self.qtdNodes = 3
         self.quadrilateral = Quadrilateral(None, Q, rho, c)

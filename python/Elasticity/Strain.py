@@ -170,7 +170,7 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False, distorce=False)
 
             firstnode = i + j * (nx + 1)
 
-            elements.append(Quadrilateral(iel, E=E, v=v, ndim=2, elasticidade=True))
+            elements.append(Quadrilateral(iel, E=E, v=v))
             elements[-1].AddNode(nodes[firstnode])
             elements[-1].AddNode(nodes[firstnode + 1])
             elements[-1].AddNode(nodes[firstnode + nx + 2])
