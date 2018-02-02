@@ -8,15 +8,32 @@ class FemCase(object):
         self.elements = elements
         self.nodes = nodes
 
-        self.P = None
 
     def SetDirichletBoundary(func=None):
         pass
 
 
+class FemContext(object):
+    """docstring for FemContext"""
+    def __init__(self):
+        super(FemContext, self).__init__()
 
-def BuildStiffnessStrain(elements, neq):
+        self.eq = {}
+        self.P = {}
+        self.neq = None
 
+    def getEq(self, node):
+        return self.eq[node.inode] if node.inode in self.eq else [None, None]
+
+    def setEqs(self, node, eqs):
+        self.eq[node.inode] = eqs
+
+    def setP(self, node, Pvalue):
+        self.P[node.inode] = Pvalue
+
+
+def BuildStiffnessStrain(context, elements):
+    neq = context.neq
     K = np.zeros((neq, neq))
     nelem = len(elements)
 
@@ -26,19 +43,27 @@ def BuildStiffnessStrain(elements, neq):
 
         for j, nodej in enumerate(elem.nodes):
             for i, nodei in enumerate(elem.nodes):
-                globalI = nodei.eq
-                globalJ = nodej.eq
+                globalIx, globalIy = context.getEq(nodei)
+                globalJx, globalJy = context.getEq(nodej)
 
-                if globalI is not None and globalJ is not None:
-                    for di in range(2):
-                        for dj in range(2):
-                            K[globalI+di, globalJ+dj] += Klocal[2*i+di, 2*j+dj]
+                if globalIx is not None and globalJx is not None:
+                    K[globalIx, globalJx] += Klocal[2*i, 2*j]
 
+                if globalIy is not None and globalJx is not None:
+                    K[globalIy, globalJx] += Klocal[2*i+1, 2*j]
+
+                if globalIx is not None and globalJy is not None:
+                    K[globalIx, globalJy] += Klocal[2*i, 2*j+1]
+
+                if globalIx is not None and globalJx is not None:
+                    K[globalIy, globalJy] += Klocal[2*i+1, 2*j+1]
 
     return K
 
 
-def CalcFStrain(elements, neq):
+def CalcFStrain(context, elements):
+
+    neq = context.neq
     F = np.zeros(neq)
 
     nelem = len(elements)
@@ -48,9 +73,12 @@ def CalcFStrain(elements, neq):
         Flocal = elem.CalcFlocalStrain()
 
         for i, node in enumerate(elem.nodes):
-            if node.eq is not None:
-                F[node.eq] += Flocal[2*i]
-                F[node.eq+1] += Flocal[2*i+1]
+            eqx, eqy = context.getEq(node)
+
+            if eqx is not None:
+                F[eqx] += Flocal[2*i]
+            if eqy is not None:
+                F[eqy] += Flocal[2*i+1]
 
     return F
 

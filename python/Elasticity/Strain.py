@@ -67,6 +67,8 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False, distorce=False)
         E = 1.0
         v = 0.25
 
+        context = FemContext()
+
         contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
 
     if entrada == 1:
@@ -93,6 +95,8 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False, distorce=False)
 
         E = 1.0
         v = 0.25
+
+        context = FemContext()
 
         contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
 
@@ -130,18 +134,18 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False, distorce=False)
             nodes.append(Node(inode, xNode, yNode))
 
             if getBoundary(i, j, nx, ny) is None:
-                nodes[-1].eq = eqCurrent
+                #nodes[-1].eq = eqCurrent
+                context.setEqs(nodes[-1], [eqCurrent, eqCurrent + 1])
                 sol.append(solfunc(xNode, yNode))
                 eqCurrent += 2
             else:
                 c = contorno[getBoundary(i, j, nx, ny)]
                 if c == NEUMANN:
-                    nodes[-1].eq = eqCurrent
-                    sol.append(solfunc(xNode, yNode))
-                    eqCurrent += 1
+                    raise NotImplementedError("Condicao de contorno de Neumann nao implementada ainda.")
                 else:
-                    nodes[-1].dirichletBoundary = True
-                    nodes[inode].p = solfunc(xNode, yNode)
+                    #nodes[-1].dirichletBoundary = True
+                    #nodes[inode].p = solfunc(xNode, yNode)
+                    context.setP(nodes[-1], solfunc(xNode, yNode))
 
             nodes[inode].f = ffunc
 
@@ -190,22 +194,24 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False, distorce=False)
         else:
             elements.append(elem)
 
-    neq = eqCurrent
+    context.neq = eqCurrent
 
-
-
-    return elements, nodes, neq, solfunc
+    return elements, nodes, context, solfunc
 
 
 def run_case(entrada, nx, ny, triangles=0.0, verbose=False, plot=False, distorce=False):
 
-    elements, nodes, neq, solfunc = ConstructCase(entrada, nx, ny, triangles, verbose, distorce)
+    elements, nodes, context, solfunc = ConstructCase(entrada, nx, ny, triangles, verbose, distorce)
 
 
-    sol = np.zeros(neq)
+    sol = np.zeros(context.neq)
     for node in nodes:
-        if node.eq is not None:
-            sol[node.eq], sol[node.eq + 1] = solfunc(node.coords[0], node.coords[1])
+        eqs = context.getEq(node)
+        solCalc = solfunc(node.coords[0], node.coords[1])
+        if eqs[0] is not None:
+            sol[eqs[0]] = solCalc[0]
+        if eqs[1] is not None:
+            sol[eqs[1]] = solCalc[1]
 
     nelem = len(elements)
     nnodes = len(nodes)
@@ -214,7 +220,7 @@ def run_case(entrada, nx, ny, triangles=0.0, verbose=False, plot=False, distorce
     #                Construindo Matriz de Rigidez
     # ***************************************************************
 
-    K = BuildStiffnessStrain(elements, neq)
+    K = BuildStiffnessStrain(context, elements)
 
     if verbose:
         print "Matriz de Rigidez"
@@ -225,7 +231,7 @@ def run_case(entrada, nx, ny, triangles=0.0, verbose=False, plot=False, distorce
     #                   Calculo do Lado Direito
     # ***************************************************************
 
-    F = CalcFStrain(elements, neq)
+    F = CalcFStrain(context, elements)
 
     if verbose:
         print "Vetor de Carga"
