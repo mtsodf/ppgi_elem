@@ -98,7 +98,7 @@ class Element(object):
         self.nodes.append(node)
 
 
-    def CalcFlocalStrain(self, context):
+    def CalcFlocalElasticity(self, context):
 
         F = np.zeros(self.QtdNodes()*self.ndim)
         P = np.zeros(self.QtdNodes()*self.ndim)

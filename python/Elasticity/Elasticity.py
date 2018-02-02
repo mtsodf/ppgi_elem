@@ -248,7 +248,7 @@ def run_case(entrada, nx, ny, triangles=0.0, verbose=False, plot=False, distorce
     #                Construindo Matriz de Rigidez
     # ***************************************************************
 
-    K = BuildStiffnessStrain(context, elements)
+    K = BuildStiffnessElasticity(context, elements)
 
     if verbose:
         print "Matriz de Rigidez"
@@ -259,7 +259,7 @@ def run_case(entrada, nx, ny, triangles=0.0, verbose=False, plot=False, distorce
     #                   Calculo do Lado Direito
     # ***************************************************************
 
-    F = CalcFStrain(context, elements)
+    F = CalcFElasticity(context, elements)
 
     if verbose:
         print "Vetor de Carga"

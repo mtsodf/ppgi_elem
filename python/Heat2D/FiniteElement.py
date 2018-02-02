@@ -20,7 +20,7 @@ def BuildStiffness(elements, neq):
 
     return K
 
-def BuildStiffnessStrain(elements, neq):
+def BuildStiffnessElasticity(elements, neq):
 
     K = np.zeros((neq, neq))
     nelem = len(elements)
@@ -42,14 +42,14 @@ def BuildStiffnessStrain(elements, neq):
 
     return K
 
-def CalcFStrain(elements, neq):
+def CalcFElasticity(elements, neq):
     F = np.zeros(neq)
 
     nelem = len(elements)
 
     for iel in xrange(nelem):
         elem = elements[iel]
-        Flocal = elem.CalcFlocalStrain()
+        Flocal = elem.CalcFlocalElasticity()
 
         for i, node in enumerate(elem.nodes):
             if node.eq is not None:

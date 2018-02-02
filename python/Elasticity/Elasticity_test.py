@@ -1,8 +1,8 @@
-from Strain import *
+from Elasticity import *
 import unittest
 
 
-class TestStrain(unittest.TestCase):
+class TestElasticity(unittest.TestCase):
 
     def test_DeslX(self):
 

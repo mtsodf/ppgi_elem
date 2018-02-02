@@ -38,7 +38,7 @@ class FemContext(object):
         self.P[node.inode] = Pvalue
 
 
-def BuildStiffnessStrain(context, elements):
+def BuildStiffnessElasticity(context, elements):
     neq = context.neq
     K = np.zeros((neq, neq))
     nelem = len(elements)
@@ -67,7 +67,7 @@ def BuildStiffnessStrain(context, elements):
     return K
 
 
-def CalcFStrain(context, elements):
+def CalcFElasticity(context, elements):
 
     neq = context.neq
     F = np.zeros(neq)
@@ -76,7 +76,7 @@ def CalcFStrain(context, elements):
 
     for iel in xrange(nelem):
         elem = elements[iel]
-        Flocal = elem.CalcFlocalStrain(context)
+        Flocal = elem.CalcFlocalElasticity(context)
 
         for i, node in enumerate(elem.nodes):
             eqx, eqy = context.getEq(node)
