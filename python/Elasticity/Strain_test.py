@@ -2,7 +2,7 @@ from Strain import *
 import unittest
 
 
-class TestHeat(unittest.TestCase):
+class TestStrain(unittest.TestCase):
 
     def test_DeslX(self):
 
