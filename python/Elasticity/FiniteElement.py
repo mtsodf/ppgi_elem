@@ -28,6 +28,12 @@ class FemContext(object):
     def setEqs(self, node, eqs):
         self.eq[node.inode] = eqs
 
+    def getP(self, node):
+        if node.inode in self.P:
+            return self.P[node.inode]
+
+        return [0.0, 0.0]
+
     def setP(self, node, Pvalue):
         self.P[node.inode] = Pvalue
 
@@ -70,7 +76,7 @@ def CalcFStrain(context, elements):
 
     for iel in xrange(nelem):
         elem = elements[iel]
-        Flocal = elem.CalcFlocalStrain()
+        Flocal = elem.CalcFlocalStrain(context)
 
         for i, node in enumerate(elem.nodes):
             eqx, eqy = context.getEq(node)

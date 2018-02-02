@@ -29,5 +29,14 @@ class TestStrain(unittest.TestCase):
 
         self.assertLess(residue, 5e-3)
 
+
+    def test_DeslXDistorceNaoHomogeneo(self):
+
+        print "Test Dirichlet Nao-Homogeneo"
+
+        residue = run_case(2, 25, 25, 0.0, False, True, distorce=True)
+
+        self.assertLess(residue, 5e-3)
+
 if __name__ == '__main__':
     unittest.main()

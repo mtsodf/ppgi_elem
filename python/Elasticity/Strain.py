@@ -101,6 +101,36 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False, distorce=False)
         contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
 
 
+    if entrada == 2:
+        def ffunc(x, y, t=0.0):
+            E = 1
+            v = 0.25
+            f = np.zeros(2)
+            f[0] = pi*pi*(E/(v*v-1))*sin(pi*x)
+            f[1] = 0.0
+            return f
+
+        def solfunc(x, y):
+            return np.array([sin(pi*x), 0])
+
+        lx = 1.0
+        ly = 1.0
+
+        x = np.linspace(0.0, lx, num=nx+1, endpoint=True)
+        y = np.linspace(0.0, ly, num=ny+1, endpoint=True)
+
+        dx = lx / nx
+        dy = ly / ny
+
+
+        E = 1.0
+        v = 0.25
+
+        context = FemContext()
+
+        contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
+
+
 
     # ***************************************************************
     #                        Criando os nós
@@ -134,17 +164,15 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False, distorce=False)
             nodes.append(Node(inode, xNode, yNode))
 
             if getBoundary(i, j, nx, ny) is None:
-                #nodes[-1].eq = eqCurrent
                 context.setEqs(nodes[-1], [eqCurrent, eqCurrent + 1])
                 sol.append(solfunc(xNode, yNode))
+                context.setP(nodes[-1], [0.0, 0.0])
                 eqCurrent += 2
             else:
                 c = contorno[getBoundary(i, j, nx, ny)]
                 if c == NEUMANN:
                     raise NotImplementedError("Condicao de contorno de Neumann nao implementada ainda.")
                 else:
-                    #nodes[-1].dirichletBoundary = True
-                    #nodes[inode].p = solfunc(xNode, yNode)
                     context.setP(nodes[-1], solfunc(xNode, yNode))
 
             nodes[inode].f = ffunc
@@ -242,6 +270,9 @@ def run_case(entrada, nx, ny, triangles=0.0, verbose=False, plot=False, distorce
     # ***************************************************************
     #                 Solucao do Sistema Linear
     # ***************************************************************
+
+
+    #TODO precisa ser revisado se esse valor negativo é realmente necessário.
     calcsol = np.linalg.solve(K, -F)
 
     # ***************************************************************
@@ -321,6 +352,8 @@ def main():
     plot = args.plot
 
     residue = run_case(entrada, nx, ny, triangles, verbose, plot)
+
+    print "Residuo encontrado = ", residue
 
 if __name__ == '__main__':
     main()

@@ -98,7 +98,7 @@ class Element(object):
         self.nodes.append(node)
 
 
-    def CalcFlocalStrain(self):
+    def CalcFlocalStrain(self, context):
 
         F = np.zeros(self.QtdNodes()*self.ndim)
         P = np.zeros(self.QtdNodes()*self.ndim)
@@ -108,6 +108,7 @@ class Element(object):
             fs = node.f(node.coords[0], node.coords[1])
             fValues[i, 0] = fs[0]
             fValues[i, 1] = fs[1]
+            P[self.ndim*i], P[self.ndim*i+1] = context.getP(node)
 
 
         coord = self.GetCoords()
@@ -129,11 +130,20 @@ class Element(object):
 
                 F[i] = F[i] + np.asarray(w*abs(detJ)*np.dot(B, aux))[i]
 
+    # ***************************************************************
+    #                 Contribuicao de Dirichlet
+    # ***************************************************************
+
+        Dirichelet = np.dot(self.CalcKlocal(), P)
+
+        # TODO verificar porque o valor do sinal eh somando.
+        F = F + Dirichelet
+
         return F
 
 
     def QtdNodes(self):
-        return len(self.nodes)
+        return self.qtdNodes
 
     def QtdDegFree(self):
         return self.qtdNodes*self.ndim
@@ -248,13 +258,13 @@ class Quadrilateral(Element):
 
     def ToTriangles(self):
 
-        tri0 = Triangle(None, self.Q, self.rho, self.c)
+        tri0 = Triangle(None, self.E, self.v)
 
         tri0.AddNode(self.nodes[0])
         tri0.AddNode(self.nodes[1])
         tri0.AddNode(self.nodes[2])
 
-        tri1 = Triangle(None, self.Q, self.rho, self.c)
+        tri1 = Triangle(None, self.E, self.v)
 
         tri1.AddNode(self.nodes[0])
         tri1.AddNode(self.nodes[2])
@@ -266,9 +276,9 @@ class Quadrilateral(Element):
 class Triangle(Element):
 
     def __init__(self, iel, E=None, v=None):
-        Element.__init__(self, iel, Q, rho, c, E, v, elasticidade)
+        Element.__init__(self, iel, E, v)
         self.qtdNodes = 3
-        self.quadrilateral = Quadrilateral(None, Q, rho, c)
+        self.quadrilateral = Quadrilateral(None, E, v)
 
 
     def AddNode(self, node):
@@ -277,8 +287,9 @@ class Triangle(Element):
 
         self.quadrilateral.AddNode(node)
 
-        if self.QtdNodes() == 3:
+        if len(self.nodes) == 3:
             self.quadrilateral.AddNode(node)
+
 
 
     def FuncForm(self, e, n, vert):
