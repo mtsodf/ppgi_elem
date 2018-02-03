@@ -7,6 +7,41 @@ from matplotlib import cm
 from matplotlib.path import Path
 from matplotlib.patches import PathPatch
 from matplotlib.mlab import griddata
+from Element import *
+
+
+def plot_solution(sol, femCase, context, uxAxis=None, uyAxis=None, fig=None):
+
+    xArray = np.zeros(femCase.QtdNodes())
+    yArray = np.zeros(femCase.QtdNodes())
+
+    valuesUx = np.zeros_like(xArray)
+    valuesUy = np.zeros_like(xArray)
+
+    i = 0
+
+
+    for node in femCase.NodesIterator():
+        x, y = node.coords
+
+        xArray[i] = x
+        yArray[i] = y
+
+        eqx, eqy = context.getEq(node)
+
+        px, py = context.getP(node)
+
+        valuesUx[i] = px if eqx is None else sol[eqx]
+        valuesUy[i] = py if eqy is None else sol[eqy]
+
+        i+=1
+
+    if uxAxis is not None:
+        plot_map(xArray, yArray, valuesUx, ax=uxAxis, fig=fig)
+
+    if uyAxis is not None:
+        plot_map(xArray, yArray, valuesUy, ax=uyAxis, fig=fig)
+
 
 
 def plot_elements(elements, ax):
@@ -92,10 +127,11 @@ def plot_map(x, y, z, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None, zma
 
     Z = np.reshape(Z, (ny, nx))
 
-    im = ax.imshow(Z, interpolation="nearest", cmap='seismic', origin='lower',
+    im = ax.imshow(Z, interpolation="bilinear", cmap='seismic', origin='lower',
                    extent=[xmin, xmax, ymin, ymax], vmin=zmin, vmax=zmax)
 
-    fig.colorbar(im)
+    if fig is not None:
+        fig.colorbar(im, orientation ='horizontal')
     if out is not None:
         plt.savefig(out)
 

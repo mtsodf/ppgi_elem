@@ -12,6 +12,12 @@ class FemCase(object):
     def SetDirichletBoundary(func=None):
         pass
 
+    def NodesIterator(self):
+        return self.nodes.__iter__()
+
+    def QtdNodes(self):
+        return len(self.nodes)
+
 
 class FemContext(object):
     """docstring for FemContext"""

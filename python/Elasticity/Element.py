@@ -322,8 +322,4 @@ class Node(object):
         super(Node, self).__init__()
         self.coords = np.array([x, y])
         self.inode = inode
-        self.eq = None
-        self.f = None
-        self.p = 0
-        self.q = 0
         self.dirichletBoundary = False

@@ -11,7 +11,7 @@ from FiniteElement import *
 from PlotMap import *
 from math import exp
 from random import random
-
+import ipdb as pdb
 
 DIRICHLET = 1
 NEUMANN = 2
@@ -130,7 +130,34 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False, distorce=False)
 
         contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
 
+    if entrada == 3:
+        def ffunc(x, y, t=0.0):
+            E = 1
+            v = 0.25
+            f = np.zeros(2)
+            f[0] = pi*pi*(E/(v*v-1))*sin(pi*x)*sin(pi*y) - (pi*pi*E/(2*v+2))*sin(pi*x)*sin(pi*y)
+            f[1] = (-pi*pi*E*v/(v*v-1)) *cos(pi*x)*cos(pi*y) + pi*pi*E/(2*v+2) * cos(pi*x) * cos(pi*y)
+            return f
 
+        def solfunc(x, y):
+            return np.array([sin(pi * x)*sin(pi*y), 0])
+
+        lx = 1.0
+        ly = 2.0
+
+        x = np.linspace(0.0, lx, num=nx+1, endpoint=True)
+        y = np.linspace(0.0, ly, num=ny+1, endpoint=True)
+
+        dx = lx / nx
+        dy = ly / ny
+
+
+        E = 1.0
+        v = 0.25
+
+        context = FemContext()
+
+        contorno = [DIRICHLET, DIRICHLET, DIRICHLET, DIRICHLET]
 
     # ***************************************************************
     #                        Criando os nós
@@ -230,7 +257,7 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False, distorce=False)
 def run_case(entrada, nx, ny, triangles=0.0, verbose=False, plot=False, distorce=False):
 
     elements, nodes, context, solfunc = ConstructCase(entrada, nx, ny, triangles, verbose, distorce)
-
+    femCase = FemCase(elements, nodes)
 
     sol = np.zeros(context.neq)
     for node in nodes:
@@ -289,39 +316,17 @@ def run_case(entrada, nx, ny, triangles=0.0, verbose=False, plot=False, distorce
     #                Plot das Solucoes
     # ***************************************************************
     if plot:
-        z2 = []
-        for node in nodes:
-            z2.append(solfunc(node.coords[0], node.coords[1]))
 
-        z2 = np.array(z2)
+        fig = plt.figure()
+        ax=fig.add_subplot(1,2,1)
 
-        fig = plt.figure(figsize=(30, 15))
-        ax = fig.add_subplot(121, projection='3d')
-
-        #X, Y, Z = GetGridValues(nodes, calcsol)
-
-        # ax.scatter3D(X, Y, Z)
-        # ax.set_xlabel('X')
-        # ax.set_ylabel('Y')
-        # ax.set_zlabel('Z')
-        # ax.set_title("Solucao Calculada")
-
-        # ax = fig.add_subplot(122, projection='3d')
-
-        # ax.scatter3D(X, Y, np.ravel(z2))
-        # ax.set_xlabel('X')
-        # ax.set_ylabel('Y')
-        # ax.set_zlabel('Z')
-        # ax.set_title("Solucao Analitica")
-
-        # plt.show()
-
-
-
-        fig = plt.figure(figsize=(16, 9))
-        ax = fig.add_subplot(111)
-        #plot_map(X, Y, Z, ax=ax, fig=fig, zmin=np.amin(z2), zmax=np.amax(z2))
+        plot_solution(calcsol, femCase, context, uxAxis=ax, fig=fig)
         plot_elements(elements, ax)
+
+        ax=fig.add_subplot(1,2,2)
+        plot_solution(calcsol, femCase, context, uyAxis=ax, fig=fig)
+        plot_elements(elements, ax)
+
         plt.savefig('permanent.png')
         plt.close()
 
