@@ -251,13 +251,18 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False, distorce=False)
 
     context.neq = eqCurrent
 
+    context.allElements = elements
+    context.allNodes = nodes
+
+
+    context.setAllElementsAndNodesToContext()
+
     return elements, nodes, context, solfunc
 
 
 def run_case(entrada, nx, ny, triangles=0.0, verbose=False, plot=False, distorce=False):
 
     elements, nodes, context, solfunc = ConstructCase(entrada, nx, ny, triangles, verbose, distorce)
-    femCase = FemCase(elements, nodes)
 
     sol = np.zeros(context.neq)
     for node in nodes:
@@ -268,14 +273,12 @@ def run_case(entrada, nx, ny, triangles=0.0, verbose=False, plot=False, distorce
         if eqs[1] is not None:
             sol[eqs[1]] = solCalc[1]
 
-    nelem = len(elements)
-    nnodes = len(nodes)
 
     # ***************************************************************
     #                Construindo Matriz de Rigidez
     # ***************************************************************
 
-    K = BuildStiffnessElasticity(context, elements)
+    K = BuildStiffnessElasticity(context)
 
     if verbose:
         print "Matriz de Rigidez"
@@ -286,7 +289,7 @@ def run_case(entrada, nx, ny, triangles=0.0, verbose=False, plot=False, distorce
     #                   Calculo do Lado Direito
     # ***************************************************************
 
-    F = CalcFElasticity(context, elements)
+    F = CalcFElasticity(context)
 
     if verbose:
         print "Vetor de Carga"
@@ -299,7 +302,7 @@ def run_case(entrada, nx, ny, triangles=0.0, verbose=False, plot=False, distorce
     # ***************************************************************
 
 
-    #TODO precisa ser revisado se esse valor negativo é realmente necessário.
+    #TODO precisa ser revisado porque esse valor negativo é necessário.
     calcsol = np.linalg.solve(K, -F)
 
     # ***************************************************************
@@ -320,11 +323,11 @@ def run_case(entrada, nx, ny, triangles=0.0, verbose=False, plot=False, distorce
         fig = plt.figure(figsize=(30,16))
         ax=fig.add_subplot(1,2,1)
 
-        plot_solution(calcsol, femCase, context, uxAxis=ax, fig=fig)
+        plot_solution(calcsol, context, uxAxis=ax, fig=fig)
         plot_elements(elements, ax)
 
         ax=fig.add_subplot(1,2,2)
-        plot_solution(calcsol, femCase, context, uyAxis=ax, fig=fig)
+        plot_solution(calcsol, context, uyAxis=ax, fig=fig)
         plot_elements(elements, ax)
 
         plt.savefig('permanent.png')

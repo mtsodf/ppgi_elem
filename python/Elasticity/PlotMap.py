@@ -10,10 +10,10 @@ from matplotlib.mlab import griddata
 from Element import *
 
 
-def plot_solution(sol, femCase, context, uxAxis=None, uyAxis=None, fig=None):
+def plot_solution(sol, context, uxAxis=None, uyAxis=None, fig=None):
 
-    xArray = np.zeros(femCase.QtdNodes())
-    yArray = np.zeros(femCase.QtdNodes())
+    xArray = np.zeros(context.QtdNodes())
+    yArray = np.zeros(context.QtdNodes())
 
     valuesUx = np.zeros_like(xArray)
     valuesUy = np.zeros_like(xArray)
@@ -21,7 +21,7 @@ def plot_solution(sol, femCase, context, uxAxis=None, uyAxis=None, fig=None):
     i = 0
 
 
-    for node in femCase.NodesIterator():
+    for node in context.nodesIter():
         x, y = node.coords
 
         xArray[i] = x

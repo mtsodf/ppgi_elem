@@ -19,6 +19,22 @@ class FemCase(object):
         return len(self.nodes)
 
 
+class IteratorByList:
+    def __init__(self, listObjects, listIndexes):
+        self.current = 0
+        self.listObjects = listObjects
+        self.listIndexes = listIndexes
+
+    def __iter__(self):
+        return self
+
+    def next(self): # Python 3: def __next__(self)
+        if self.current >= len(self.listIndexes):
+            raise StopIteration
+        else:
+            self.current += 1
+            return self.listObjects[self.current-1]
+
 class FemContext(object):
     """docstring for FemContext"""
     def __init__(self):
@@ -27,6 +43,14 @@ class FemContext(object):
         self.eq = {}
         self.P = {}
         self.neq = None
+
+        self.allElements = None
+        self.allNodes = None
+
+        self.elements = None
+        self.nodes = None
+
+
 
     def getEq(self, node):
         return self.eq[node.inode] if node.inode in self.eq else [None, None]
@@ -44,13 +68,27 @@ class FemContext(object):
         self.P[node.inode] = Pvalue
 
 
-def BuildStiffnessElasticity(context, elements):
+    def setAllElementsAndNodesToContext(self):
+        self.elements = np.arange(len(self.allElements))
+        self.nodes = np.arange(len(self.allNodes))
+
+
+    def QtdNodes(self):
+        return len(self.nodes)
+
+    def elementsIter(self):
+        return IteratorByList(self.allElements, self.elements)
+
+    def nodesIter(self):
+        return IteratorByList(self.allNodes, self.nodes)
+
+
+def BuildStiffnessElasticity(context):
     neq = context.neq
     K = np.zeros((neq, neq))
-    nelem = len(elements)
 
-    for iel in range(nelem):
-        elem = elements[iel]
+    for elem in context.elementsIter():
+        #elem = elements[iel]
         Klocal = elem.CalcKlocal()
 
         for j, nodej in enumerate(elem.nodes):
@@ -73,15 +111,14 @@ def BuildStiffnessElasticity(context, elements):
     return K
 
 
-def CalcFElasticity(context, elements):
+def CalcFElasticity(context):
 
     neq = context.neq
     F = np.zeros(neq)
 
-    nelem = len(elements)
 
-    for iel in xrange(nelem):
-        elem = elements[iel]
+    for elem in context.elementsIter():
+
         Flocal = elem.CalcFlocalElasticity(context)
 
         for i, node in enumerate(elem.nodes):
