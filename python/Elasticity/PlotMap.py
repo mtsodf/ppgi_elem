@@ -44,34 +44,7 @@ def plot_solution(sol, context, uxAxis=None, uyAxis=None, fig=None):
 
 
 
-def plot_elements(elements, ax):
 
-    import matplotlib.pyplot as plt
-
-    vertices = []
-    codes = []
-
-    for element in elements:
-
-        codes = [Path.MOVETO] + [Path.LINETO] * 3 + [Path.CLOSEPOLY]
-        vertices = [(1, 1), (1, 2), (2, 2), (2, 1), (0, 0)]
-
-    codes += [Path.MOVETO] + [Path.LINETO] * 2 + [Path.CLOSEPOLY]
-    vertices += [(4, 4), (5, 5), (5, 4), (0, 0)]
-
-    vertices = np.array(vertices, float)
-    path = Path(vertices, codes)
-
-    pathpatch = PathPatch(path, facecolor='None', edgecolor='green')
-
-    fig, ax = plt.subplots()
-    ax.add_patch(pathpatch)
-    ax.set_title('A compound path')
-
-    ax.dataLim.update_from_data_xy(vertices)
-    ax.autoscale_view()
-
-    plt.show()
 
 
 def plot_surface(x, y, z, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None, zmax=None, ax=None, fig=None, n=20, out='surface.png'):

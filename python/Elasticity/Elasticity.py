@@ -257,15 +257,15 @@ def ConstructCase(entrada, nx, ny, triangles=0.0, verbose=False, distorce=False)
 
     context.setAllElementsAndNodesToContext()
 
-    return elements, nodes, context, solfunc
+    return context, solfunc
 
 
 def run_case(entrada, nx, ny, triangles=0.0, verbose=False, plot=False, distorce=False):
 
-    elements, nodes, context, solfunc = ConstructCase(entrada, nx, ny, triangles, verbose, distorce)
+    context, solfunc = ConstructCase(entrada, nx, ny, triangles, verbose, distorce)
 
     sol = np.zeros(context.neq)
-    for node in nodes:
+    for node in context.nodesIter():
         eqs = context.getEq(node)
         solCalc = solfunc(node.coords[0], node.coords[1])
         if eqs[0] is not None:
@@ -324,11 +324,11 @@ def run_case(entrada, nx, ny, triangles=0.0, verbose=False, plot=False, distorce
         ax=fig.add_subplot(1,2,1)
 
         plot_solution(calcsol, context, uxAxis=ax, fig=fig)
-        plot_elements(elements, ax)
+        plot_elements(context.elementsIter(), ax)
 
         ax=fig.add_subplot(1,2,2)
         plot_solution(calcsol, context, uyAxis=ax, fig=fig)
-        plot_elements(elements, ax)
+        plot_elements(context.elementsIter(), ax)
 
         plt.savefig('permanent.png')
         plt.close()
