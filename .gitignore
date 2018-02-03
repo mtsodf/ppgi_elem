@@ -1,3 +1,5 @@
 openacc/saxpy
 cpp/build
 *.pyc
+cpp/CMakeFiles/
+python/Heat2D/out/
