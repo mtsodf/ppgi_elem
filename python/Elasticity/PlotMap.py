@@ -127,7 +127,7 @@ def plot_map(x, y, z, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None, zma
 
     Z = np.reshape(Z, (ny, nx))
 
-    im = ax.imshow(Z, interpolation="bilinear", cmap='seismic', origin='lower',
+    im = ax.imshow(Z, interpolation="bilinear", cmap='rainbow', origin='lower',
                    extent=[xmin, xmax, ymin, ymax], vmin=zmin, vmax=zmax)
 
     if fig is not None:
@@ -148,7 +148,7 @@ def plot_elements(elements, ax=None):
             xs.append(node.coords[0])
             ys.append(node.coords[1])
 
-        ax.plot(xs, ys, 'ko-', markersize=3)
+        ax.plot(xs, ys, 'ko-', markersize=0)
 
 
 if __name__ == '__main__':

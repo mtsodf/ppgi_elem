@@ -317,7 +317,7 @@ def run_case(entrada, nx, ny, triangles=0.0, verbose=False, plot=False, distorce
     # ***************************************************************
     if plot:
 
-        fig = plt.figure()
+        fig = plt.figure(figsize=(30,16))
         ax=fig.add_subplot(1,2,1)
 
         plot_solution(calcsol, femCase, context, uxAxis=ax, fig=fig)
